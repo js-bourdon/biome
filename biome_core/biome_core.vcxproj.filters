@@ -1,0 +1,208 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="pch">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="src\Core">
+      <UniqueIdentifier>{5675afa0-dec4-4e65-9d8f-897c8985e261}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\DataStructures">
+      <UniqueIdentifier>{b446ec9f-93b4-4fc3-85f1-ae687ae185e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Handle">
+      <UniqueIdentifier>{d6759026-4174-4902-bfae-3d647060241b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Math">
+      <UniqueIdentifier>{54a01031-d2ca-414d-a57c-d17051929494}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Memory">
+      <UniqueIdentifier>{5536a690-2df4-4044-832e-11da6d65106b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Memory\Implementation">
+      <UniqueIdentifier>{d30466ef-41e6-4d77-bb89-76215f9a97d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Memory\Implementation\Windows">
+      <UniqueIdentifier>{4e7439c3-f556-4b51-a152-7d471c77343b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\SystemInfo">
+      <UniqueIdentifier>{9cee0d13-4db8-4e5d-b7c8-30941850dfb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\SystemInfo\Implementations">
+      <UniqueIdentifier>{14ca8c39-a262-411a-9de0-774b04318ba8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\SystemInfo\Implementations\Windows">
+      <UniqueIdentifier>{46203968-16a2-4a81-ae8b-f588afdd923c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Threading">
+      <UniqueIdentifier>{2c94fbc3-cdca-4415-8dc5-fb0500b996e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Assets">
+      <UniqueIdentifier>{2c09e6b8-9ffc-491c-b627-387719c2ade3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\SQLite">
+      <UniqueIdentifier>{7d169afd-26f0-4b01-b5fb-ea50e2337ce6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\FileSystem">
+      <UniqueIdentifier>{765d9e14-f618-4cf8-afc8-372a5ba15740}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Libraries">
+      <UniqueIdentifier>{869e0f44-7b35-4577-8cc2-225156562b80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Libraries\Implementations">
+      <UniqueIdentifier>{c4da03f9-361c-4215-b8de-a4e3d5141f94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Libraries\Implementations\Windows">
+      <UniqueIdentifier>{0d3ea0d8-00b2-41e0-8ce0-cc6526872dd7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Defines.h">
+      <Filter>src\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Globals.h">
+      <Filter>src\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\IndexFreeList.h">
+      <Filter>src\DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\PackedArray.h">
+      <Filter>src\DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Handle\Handle.h">
+      <Filter>src\Handle</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Math.h">
+      <Filter>src\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\FrameMemoryAllocator.h">
+      <Filter>src\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\Memory.h">
+      <Filter>src\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\RingBuffer.h">
+      <Filter>src\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\ThreadHeapAllocator.h">
+      <Filter>src\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\VirtualMemoryAllocator.h">
+      <Filter>src\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Threading\WorkerThread.h">
+      <Filter>src\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemInfo\SystemInfo.h">
+      <Filter>src\SystemInfo</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\Texture.h">
+      <Filter>src\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\Mesh.h">
+      <Filter>src\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\ThreadHeapSmartPointer.h">
+      <Filter>src\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\FileSystem.h">
+      <Filter>src\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\AssetDatabase.h">
+      <Filter>src\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="sqlite\sqlite3.h">
+      <Filter>src\SQLite</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\SubAllocator.h">
+      <Filter>src\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\Vector.h">
+      <Filter>src\DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Libraries\LibraryLoader.h">
+      <Filter>src\Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\StackAllocator.h">
+      <Filter>src\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\StaticArray.h">
+      <Filter>src\DataStructures</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DataStructures\IndexFreeList.cpp">
+      <Filter>src\DataStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\FrameMemoryAllocator.cpp">
+      <Filter>src\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\Memory.cpp">
+      <Filter>src\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\RingBuffer.cpp">
+      <Filter>src\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\ThreadHeapAllocator.cpp">
+      <Filter>src\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\VirtualMemoryAllocator.cpp">
+      <Filter>src\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemInfo\SystemInfo.cpp">
+      <Filter>src\SystemInfo</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\FileSystem.cpp">
+      <Filter>src\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Assets\AssetDatabase.cpp">
+      <Filter>src\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="sqlite\sqlite_implementation.c">
+      <Filter>src\SQLite</Filter>
+    </ClCompile>
+    <ClCompile Include="sqlite\sqlite3.c">
+      <Filter>src\SQLite</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\SubAllocator.cpp">
+      <Filter>src\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>pch</Filter>
+    </ClCompile>
+    <ClCompile Include="Libraries\LibraryLoader.cpp">
+      <Filter>src\Libraries</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Memory\Implementations\Windows\VirtualMemoryAllocator.inl">
+      <Filter>src\Memory\Implementation\Windows</Filter>
+    </None>
+    <None Include="SystemInfo\Implementations\Windows\SystemInfo.inl">
+      <Filter>src\SystemInfo\Implementations\Windows</Filter>
+    </None>
+    <None Include="FileSystem\FileSystem.inl">
+      <Filter>src\FileSystem</Filter>
+    </None>
+    <None Include="DataStructures\Vector.inl">
+      <Filter>src\DataStructures</Filter>
+    </None>
+    <None Include="Libraries\Implementations\Windows\LibraryLoader.inl">
+      <Filter>src\Libraries\Implementations\Windows</Filter>
+    </None>
+    <None Include="DataStructures\StaticArray.inl">
+      <Filter>src\DataStructures</Filter>
+    </None>
+  </ItemGroup>
+</Project>

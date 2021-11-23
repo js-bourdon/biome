@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="pch">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="src\Descriptors">
+      <UniqueIdentifier>{bf22d5d4-941c-43aa-a493-c7cc5191b8ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Events">
+      <UniqueIdentifier>{ecdeb703-1709-4b7e-9f6f-10b627e0d2fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Resources">
+      <UniqueIdentifier>{028a5f25-bc4b-4ba0-b770-6c9962cab70e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Sync">
+      <UniqueIdentifier>{ab0fab81-ecc1-4db6-89e5-ffe926009dc2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\WindowFactory">
+      <UniqueIdentifier>{80714b16-7857-4f0d-b8fd-cc6aa848450d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Events\Implementations">
+      <UniqueIdentifier>{c708cb94-8d9d-4ec6-a958-144dc71eefbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Events\Implementations\Windows">
+      <UniqueIdentifier>{1fde7585-8c4d-4727-ac75-edf4901bd1fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\WindowFactory\Implementations">
+      <UniqueIdentifier>{b9175eef-e8f4-47ae-90e7-c7de27eda094}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\WindowFactory\Implementations\Windows">
+      <UniqueIdentifier>{60ded7f9-9337-4b8d-93f9-23fb36e409ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Systems">
+      <UniqueIdentifier>{860984dc-b20c-476a-b1f2-944e56a98249}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Systems\Implementations">
+      <UniqueIdentifier>{ad8a9d37-0051-4d45-a885-fbb4a31ec6f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Systems\Implementations\Windows">
+      <UniqueIdentifier>{ad7e0e13-496e-4e16-b8fd-f585bb5479a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Systems\Implementations\Windows\dx12">
+      <UniqueIdentifier>{d323e2df-3348-4b03-bb77-6c04bbd7ada6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies">
+      <UniqueIdentifier>{dce0bc3a-ba97-469e-94bb-3bbd8512d053}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\PixelFormats.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\ResourceUsage.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Events\MessagePump.h">
+      <Filter>src\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowFactory\WindowFactory.h">
+      <Filter>src\WindowFactory</Filter>
+    </ClInclude>
+    <ClInclude Include="Sync\Barrier.h">
+      <Filter>src\Sync</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\ResourceHandles.h">
+      <Filter>src\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Systems\DeviceSystem.h">
+      <Filter>src\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Systems\CommandSystem.h">
+      <Filter>src\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Systems\SystemEnums.h">
+      <Filter>src\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\Rectangle.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\Viewport.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\BlendStateDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\BufferDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\ClearDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\DepthStencilStateDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\InputLayoutDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\PipelineDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\RasterizerStateDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\SamplerStateDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\ScissorRectDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\SurfaceDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\TextureDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\DescriptorTable.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\d3d12.h">
+      <Filter>Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="Descriptors\ShaderResourceLayoutDesc.h">
+      <Filter>src\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\Resources.h">
+      <Filter>src\Resources</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Events\MessagePump.cpp">
+      <Filter>src\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowFactory\WindowFactory.cpp">
+      <Filter>src\WindowFactory</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>pch</Filter>
+    </ClCompile>
+    <ClCompile Include="Systems\DeviceSystem.cpp">
+      <Filter>src\Systems</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Events\Implementations\Windows\MessagePump.inl">
+      <Filter>src\Events\Implementations\Windows</Filter>
+    </None>
+    <None Include="WindowFactory\Implementations\Windows\WindowFactory.inl">
+      <Filter>src\WindowFactory\Implementations\Windows</Filter>
+    </None>
+    <None Include="Systems\Implementations\Windows\dx12\DeviceSystem.inl">
+      <Filter>src\Systems\Implementations\Windows\dx12</Filter>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+</Project>
