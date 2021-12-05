@@ -9,6 +9,8 @@ using namespace biome;
 
 int main(int argc, char* argv[])
 {
+    BIOME_ASSERT_ALWAYS_EXEC(ThreadHeapAllocator::Initialize(GiB(1), MiB(100)));
+
     // All heavy memory allocations must go through biome::memory::VirtualMemoryAllocator.
     AssetDatabaseBuilder builder;
 
@@ -16,7 +18,7 @@ int main(int argc, char* argv[])
 //     const char* pGltfFilePath = argv[1];
 //     const char* pDbFilePath = argv[2];
 
-    bool success = builder.BuildDatabase("D:/github/biome/TestApp/Media/star_trek_danube_class/scene.gltf", "D:/Temp/StartTrek.db");
+    bool success = builder.BuildDatabase("../TestApp/Media/star_trek_danube_class/scene.gltf", "C:/temp/biome/StartTrek.db");
     //bool success = builder.BuildDatabase(pGltfFilePath, pDbFilePath);
 
     if (success)

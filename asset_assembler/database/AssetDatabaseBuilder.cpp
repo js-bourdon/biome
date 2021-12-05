@@ -6,6 +6,8 @@
 #include "biome_core/Assets/AssetDatabase.h"
 #include "biome_core/Assets/Texture.h"
 #include "rapidjson/document.h"
+#include "stb/stb_image.h"
+#include "stb/stb_dxt.h"
 
 using namespace asset_assembler::database;
 using namespace biome;
@@ -444,10 +446,68 @@ void AssetDatabaseBuilder::GetBufferView(const Document& json, SizeType accessor
 
 int64_t AssetDatabaseBuilder::CompressTexture(const char* pSrcFilePath, FILE* pDestFile)
 {
-    int64_t byteSize = 0;
+    // TODO: Generate MIP chain if not already generated
 
-    // Generate MIP chain if not already generated
-    // Compress texture into BC3 for now #todo provide format as argument
+    // Load images with stb_image
+    // https://github.com/nothings/stb/blob/master/stb_image.h
+
+    int pixelWidth, pixelHeight, componentCount;
+    constexpr int mode = 0; // Normal mode
+    const unsigned char* fileContent = stbi_load(pSrcFilePath, &pixelWidth, &pixelHeight, &componentCount, mode);
+
+    BIOME_ASSERT(componentCount == 3 || componentCount == 4);
+
+    // Block compress using stb_dxt
+    // https://github.com/nothings/stb/blob/master/stb_dxt.h
+
+    BIOME_ASSERT(pixelWidth % 4 == 0);
+    BIOME_ASSERT(pixelHeight % 4 == 0);
+
+    const uint32_t blockWidth = pixelWidth >> 2;
+    const uint32_t blockHeight = pixelHeight >> 2;
+    const int64_t byteSize = blockWidth * blockHeight * 16;
+    const uint32_t rowStride = pixelWidth * componentCount;
+
+    ThreadHeapSmartPointer<unsigned char> bcDest(ThreadHeapAllocator::Allocate(byteSize));
+
+    unsigned char blockData[16][4];
+    const unsigned char* pBlockData = &blockData[0][0];
+    for (uint32_t blockY = 0; blockY < blockHeight; ++blockY)
+    {
+        for (uint32_t blockX = 0; blockX < blockWidth; ++blockX)
+        {
+            const uint32_t pixelBlockStartOffset = blockY * 4 * rowStride + blockX * 4;
+            const uint32_t destBlockOffset = blockY * blockWidth + blockX;
+            unsigned char* pDest = bcDest + destBlockOffset;
+
+            for (uint32_t y = 0; y < 4; ++y)
+            {
+                for (uint32_t x = 0; x < 4; ++x)
+                {
+                    const uint32_t srcPixelOffset = pixelBlockStartOffset + y * rowStride + x;
+                    const uint32_t blockDataDstOffset = y * 4 + x;
+                    
+                    blockData[blockDataDstOffset][0] = fileContent[srcPixelOffset];
+                    blockData[blockDataDstOffset][1] = fileContent[srcPixelOffset + 1];
+                    blockData[blockDataDstOffset][2] = fileContent[srcPixelOffset + 2];
+
+                    if (componentCount == 4)
+                    {
+                        blockData[blockDataDstOffset][3] = fileContent[srcPixelOffset + 3];
+                    }
+                    else
+                    {
+                        blockData[blockDataDstOffset][3] = 255;
+                    }
+                }
+            }
+
+            constexpr int alpha = 1;
+            stb_compress_dxt_block(pDest, pBlockData, alpha, STB_DXT_NORMAL);
+
+            BIOME_ASSERT_ALWAYS_EXEC(fwrite(pBlockData, sizeof(uint8_t), sizeof(blockData), pDestFile) == sizeof(blockData));
+        }
+    }
 
     return byteSize;
 }
