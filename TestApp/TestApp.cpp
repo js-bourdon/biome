@@ -55,7 +55,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     int value0 = worker0.Wait();
     int value1 = worker1.Wait();
 
-    WindowHandle hwnd = factory::CreateNewWindow(reinterpret_cast<biome::rhi::AppHandle>(hInstance), 1920, 1080, L"Salvation");
+    WindowHandle hwnd = factory::CreateNewWindow(reinterpret_cast<biome::rhi::AppHandle>(hInstance), 1920, 1080, L"Biome");
     factory::DisplayWindow(hwnd);
 
     GpuDeviceHandle deviceHdl = device::CreateDevice();

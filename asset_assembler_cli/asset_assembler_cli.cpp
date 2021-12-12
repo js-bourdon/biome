@@ -18,7 +18,9 @@ int main(int argc, char* argv[])
 //     const char* pGltfFilePath = argv[1];
 //     const char* pDbFilePath = argv[2];
 
-    bool success = builder.BuildDatabase("../TestApp/Media/star_trek_danube_class/scene.gltf", "C:/temp/biome/StartTrek.db");
+    bool success = builder.BuildDatabase(
+        "../TestApp/Media/star_trek_danube_class/scene.gltf", 
+        "../TestApp/Media/builds/star_trek_danube_class/StartTrek.db");
     //bool success = builder.BuildDatabase(pGltfFilePath, pDbFilePath);
 
     if (success)
