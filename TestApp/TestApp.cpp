@@ -62,10 +62,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     CommandQueueHandle cmdQueueHdl = device::CreateCommandQueue(deviceHdl, CommandType::Graphics);
     
     // Assets loading
-//     AssetDatabase* pAssetDb = LoadDatabase("D:/Temp/StartTrek.db");
-//     const Texture* pTextures = GetTextures(pAssetDb);
-//     const Mesh* pMeshes = GetMeshes(pAssetDb);
-//     DestroyDatabase(pAssetDb);
+    AssetDatabase* pAssetDb = LoadDatabase("Media/builds/star_trek_danube_class/StartTrek.db");
+    const Texture* pTextures = GetTextures(pAssetDb);
+    const Mesh* pMeshes = GetMeshes(pAssetDb);
+    DestroyDatabase(pAssetDb);
 
     while (!biome::rhi::events::PumpMessages())
     {
