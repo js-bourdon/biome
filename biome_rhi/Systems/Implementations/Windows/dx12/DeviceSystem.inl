@@ -568,6 +568,25 @@ Shader device::CreateShader(GpuDeviceHandle /*deviceHdl*/, const char* pFilePath
     return biome::filesystem::ReadFileContent(pFilePath);
 }
 
+ShaderResourceLayoutHandle device::CreateShaderResourceLayout(GpuDeviceHandle deviceHdl, const char* pFilePath)
+{
+    size_t fileSize;
+    ThreadHeapSmartPointer<uint8_t> layoutFileContent = filesystem::ReadFileContent(pFilePath, fileSize);
+
+    ShaderResourceLayoutHandle layoutHdl;
+    ID3D12RootSignature* pRootSig;
+    ID3D12Device* pDevice;
+    AsType(pDevice, deviceHdl);
+
+    if (SUCCEEDED(pDevice->CreateRootSignature(0, layoutFileContent, fileSize, IID_PPV_ARGS(&pRootSig))))
+    {
+        AsHandle(pRootSig, layoutHdl);
+        return layoutHdl;
+    }
+
+    return Handle_NULL;
+}
+
 ShaderResourceLayoutHandle device::CreateShaderResourceLayout(GpuDeviceHandle deviceHdl, const ShaderResourceLayoutDesc& desc)
 {
     D3D12_VERSIONED_ROOT_SIGNATURE_DESC d3dRootSigDesc;

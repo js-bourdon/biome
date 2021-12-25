@@ -55,11 +55,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     int value0 = worker0.Wait();
     int value1 = worker1.Wait();
 
-    WindowHandle hwnd = factory::CreateNewWindow(reinterpret_cast<biome::rhi::AppHandle>(hInstance), 1920, 1080, L"Biome");
+    constexpr uint32_t windowWidth = 1980;
+    constexpr uint32_t windowHeight = 1080;
+
+    WindowHandle hwnd = factory::CreateNewWindow(reinterpret_cast<biome::rhi::AppHandle>(hInstance), windowWidth, windowHeight, L"Biome");
     factory::DisplayWindow(hwnd);
 
-    GpuDeviceHandle deviceHdl = device::CreateDevice();
-    CommandQueueHandle cmdQueueHdl = device::CreateCommandQueue(deviceHdl, CommandType::Graphics);
+    const GpuDeviceHandle deviceHdl = device::CreateDevice();
+    const CommandQueueHandle cmdQueueHdl = device::CreateCommandQueue(deviceHdl, CommandType::Graphics);
     
     // Assets loading
     AssetDatabase* pAssetDb = LoadDatabase("Media/builds/star_trek_danube_class/StartTrek.db");
@@ -67,13 +70,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     const Mesh* pMeshes = GetMeshes(pAssetDb);
     DestroyDatabase(pAssetDb);
 
+    constexpr uint32_t backBufferCount = 2;
+    const SwapChainHandle swapChainHdl = device::CreateSwapChain(deviceHdl, cmdQueueHdl, hwnd, backBufferCount, windowWidth, windowHeight);
+
+    device::CommandBuffer cmdBufferHdl;
+    BIOME_ASSERT_ALWAYS_EXEC(device::CreateCommandBuffer(deviceHdl, CommandType::Graphics, cmdBufferHdl));
+
     while (!biome::rhi::events::PumpMessages())
     {
         std::this_thread::sleep_for(100ms);
     }
 
-    device::DestroyDevice(deviceHdl);
+    device::DestroyCommandBuffer(cmdBufferHdl);
+    device::DestroySwapChain(swapChainHdl);
     device::DestroyCommandQueue(cmdQueueHdl);
+    device::DestroyDevice(deviceHdl);
 
     return 0;
 }

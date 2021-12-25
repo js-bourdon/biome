@@ -40,6 +40,7 @@ namespace biome::rhi
 
         Shader                      CreateShader(GpuDeviceHandle deviceHdl, const char* pFilePath);
         ShaderResourceLayoutHandle  CreateShaderResourceLayout(GpuDeviceHandle deviceHdl, const ShaderResourceLayoutDesc& desc);
+        ShaderResourceLayoutHandle  CreateShaderResourceLayout(GpuDeviceHandle deviceHdl, const char* pFilePath);
         GfxPipelineHandle           CreateGraphicsPipeline(GpuDeviceHandle deviceHdl, const GfxPipelineDesc& desc);
         ComputePipelineHandle       CreateComputePipeline(GpuDeviceHandle deviceHdl, const ComputePipelineDesc& desc);
         DescriptorHeapHandle        CreateDescriptorHeap(GpuDeviceHandle deviceHdl);
