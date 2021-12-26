@@ -9,6 +9,7 @@ namespace biome::rhi::descriptors
     struct ShaderResourceLayoutDesc;
     struct GfxPipelineDesc;
     struct ComputePipelineDesc;
+    enum class PixelFormat;
 }
 
 using namespace biome::rhi::descriptors;
@@ -37,6 +38,8 @@ namespace biome::rhi
                                         uint32_t backBufferCount,
                                         uint32_t pixelWidth,
                                         uint32_t pixelHeight);
+
+        PixelFormat                 GetSwapChainFormat(SwapChainHandle hdl);
 
         Shader                      CreateShader(GpuDeviceHandle deviceHdl, const char* pFilePath);
         ShaderResourceLayoutHandle  CreateShaderResourceLayout(GpuDeviceHandle deviceHdl, const ShaderResourceLayoutDesc& desc);

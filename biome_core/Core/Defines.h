@@ -56,17 +56,24 @@
     #define CHECK_HRESULT_RETURN_VALUE(x, v) CHECK_HRESULT_RETURN_VALUE_INTERNAL(hr_##__FILE__##__LINE__, x, v)
 
     #ifdef _DEBUG
-        #define BIOME_ASSERT_MSG(x, msg)                                                                                \
+        #define BIOME_ASSERT_MSG(x, msg)                                                                                    \
         {                                                                                                                   \
             if (!(x))                                                                                                       \
             {                                                                                                               \
                 char tmp[1024];                                                                                             \
-                sprintf_s(tmp, BIOME_ARRAY_SIZE(tmp), "Assertion failed: %s\n%s", #x, msg);                             \
+                sprintf_s(tmp, BIOME_ARRAY_SIZE(tmp), "Assertion failed: %s\n%s", #x, msg);                                 \
                 printf_s("%s", tmp);                                                                                        \
                 const int selection = MessageBoxA(NULL, tmp, "Assert", MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_TASKMODAL);  \
                 if (selection == IDRETRY) DebugBreak();                                                                     \
                 else if (selection == IDABORT) exit(1);                                                                     \
             }                                                                                                               \
+        }
+
+        #define BIOME_ASSERT_MSG_FMT(x, msg, ...)                           \
+        {                                                                   \
+            char tmpFmt[512];                                               \
+            sprintf_s(tmpFmt, BIOME_ARRAY_SIZE(tmpFmt), msg, __VA_ARGS__);  \
+            BIOME_ASSERT_MSG(x, tmpFmt);                                    \
         }
 
         #define BIOME_ASSERT(x) BIOME_ASSERT_MSG(x, "")
@@ -75,6 +82,7 @@
         #define BIOME_FAIL_MSG(msg) BIOME_ASSERT_MSG(false, msg)
     #else
         #define BIOME_ASSERT_MSG(x, msg)
+        #define BIOME_ASSERT_MSG_FMT(x, msg, ...)
         #define BIOME_ASSERT(x)
         #define BIOME_ASSERT_ALWAYS_EXEC(x) (x)
         #define BIOME_FAIL() 

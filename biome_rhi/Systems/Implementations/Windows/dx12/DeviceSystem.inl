@@ -422,6 +422,26 @@ namespace
     }
 }
 
+static const char* ToNativeInputSemanticName(InputLayoutSemantic semantic)
+{
+    switch (semantic)
+    {
+    case InputLayoutSemantic::Position:
+        return "Position";
+    case InputLayoutSemantic::Normal:
+        return "Normal";
+    case InputLayoutSemantic::Tangent:
+        return "Tangent";
+    case InputLayoutSemantic::UV:
+    case InputLayoutSemantic::Float2:
+    case InputLayoutSemantic::Float3:
+    case InputLayoutSemantic::Float4:
+        return "TEXCOORD";
+    default:
+        return nullptr;
+    }
+}
+
 GpuDeviceHandle device::CreateDevice()
 {
     GpuDeviceHandle deviceHdl = Handle_NULL;
@@ -563,6 +583,11 @@ SwapChainHandle device::CreateSwapChain(
     return swapChainHdl;
 }
 
+PixelFormat device::GetSwapChainFormat(SwapChainHandle /*hdl*/)
+{
+    return PixelFormat::R8G8B8A8_UNORM;
+}
+
 Shader device::CreateShader(GpuDeviceHandle /*deviceHdl*/, const char* pFilePath)
 {
     return biome::filesystem::ReadFileContent(pFilePath);
@@ -573,15 +598,18 @@ ShaderResourceLayoutHandle device::CreateShaderResourceLayout(GpuDeviceHandle de
     size_t fileSize;
     ThreadHeapSmartPointer<uint8_t> layoutFileContent = filesystem::ReadFileContent(pFilePath, fileSize);
 
-    ShaderResourceLayoutHandle layoutHdl;
-    ID3D12RootSignature* pRootSig;
-    ID3D12Device* pDevice;
-    AsType(pDevice, deviceHdl);
-
-    if (SUCCEEDED(pDevice->CreateRootSignature(0, layoutFileContent, fileSize, IID_PPV_ARGS(&pRootSig))))
+    if (layoutFileContent != nullptr)
     {
-        AsHandle(pRootSig, layoutHdl);
-        return layoutHdl;
+        ShaderResourceLayoutHandle layoutHdl;
+        ID3D12RootSignature* pRootSig;
+        ID3D12Device* pDevice;
+        AsType(pDevice, deviceHdl);
+
+        if (SUCCEEDED(pDevice->CreateRootSignature(0, layoutFileContent, fileSize, IID_PPV_ARGS(&pRootSig))))
+        {
+            AsHandle(pRootSig, layoutHdl);
+            return layoutHdl;
+        }
     }
 
     return Handle_NULL;
@@ -674,6 +702,7 @@ GfxPipelineHandle device::CreateGraphicsPipeline(GpuDeviceHandle deviceHdl, cons
     AsType(pRootSig, desc.ResourceLayout);
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC d3dDesc {};
+    d3dDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
     d3dDesc.pRootSignature = pRootSig;
     d3dDesc.VS.pShaderBytecode = desc.VertexShader.Data();
     d3dDesc.VS.BytecodeLength = desc.VertexShader.Size();
@@ -749,14 +778,23 @@ GfxPipelineHandle device::CreateGraphicsPipeline(GpuDeviceHandle deviceHdl, cons
     {
         const InputLayoutElement& element = desc.InputLayout.Elements[elementIndex];
         D3D12_INPUT_ELEMENT_DESC& d3dElement = d3dElements[elementIndex];
-        
+        d3dElement.InputSlot = element.Slot;
+        d3dElement.SemanticName = ToNativeInputSemanticName(element.Semantic);
     }
 
-#ifdef _DEBUG
-    d3dDesc.Flags = D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG;
-#else 
-    d3dDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
-#endif
+    d3dDesc.InputLayout.pInputElementDescs = d3dElements.Data();
+
+    ID3D12PipelineState* pPipeline;
+    ID3D12Device* pDevice;
+    AsType(pDevice, deviceHdl);
+    
+    if (SUCCEEDED(pDevice->CreateGraphicsPipelineState(&d3dDesc, IID_PPV_ARGS(&pPipeline))))
+    {
+        GfxPipelineHandle gfxPipeHdl;
+        AsHandle(pPipeline, gfxPipeHdl);
+
+        return gfxPipeHdl;
+    }
 
     return Handle_NULL;
 }
@@ -804,9 +842,11 @@ void device::DestroyShaderResourceLayout(ShaderResourceLayoutHandle /*hdl*/)
 
 }
 
-void device::DestroyGfxPipeline(GfxPipelineHandle /*hdl*/)
+void device::DestroyGfxPipeline(GfxPipelineHandle hdl)
 {
-
+    ID3D12PipelineState* pState;
+    AsType(pState, hdl);
+    pState->Release();
 }
 
 void device::DestroyComputePipeline(ComputePipelineHandle /*hdl*/)

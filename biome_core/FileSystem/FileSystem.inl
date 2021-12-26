@@ -29,7 +29,7 @@ template<typename AllocatorType>
 StaticArray<uint8_t, AllocatorType> biome::filesystem::ReadFileContent(const char* pSrcPath)
 {
     FILE* pFile;
-    errno_t err = fopen_s(&pFile, pSrcPath, "r");
+    errno_t err = fopen_s(&pFile, pSrcPath, "rb");
 
     if(err == 0 && pFile)
     {
@@ -40,7 +40,9 @@ StaticArray<uint8_t, AllocatorType> biome::filesystem::ReadFileContent(const cha
         StaticArray<uint8_t, AllocatorType> content(fileSize);
         uint8_t* pContent = content.Data();
 
-        fread(pContent, sizeof(uint8_t), fileSize, pFile);
+        const size_t bytesRead = fread(pContent, sizeof(uint8_t), fileSize, pFile);
+        BIOME_ASSERT_MSG_FMT(bytesRead == fileSize, "File size: %zu Bytes read: %zu", fileSize, bytesRead);
+
         fclose(pFile);
 
         return content;
