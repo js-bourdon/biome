@@ -1,7 +1,6 @@
 #pragma once
 
 #include "biome_rhi/Resources/ResourceHandles.h"
-#include "biome_rhi/Resources/Resources.h"
 #include "biome_rhi/Systems/SystemEnums.h"
 
 namespace biome::rhi::descriptors
@@ -13,7 +12,6 @@ namespace biome::rhi::descriptors
 }
 
 using namespace biome::rhi::descriptors;
-using namespace biome::rhi::resources;
 
 namespace biome::rhi
 {
@@ -21,27 +19,25 @@ namespace biome::rhi
 
     namespace device
     {
-        struct CommandBuffer
-        {
-            CommandListHandle       m_cmdListHdl {};
-            CommandAllocatorHandle  m_cmdAllocHdl {};
-        };
-
-        GpuDeviceHandle             CreateDevice();
+        GpuDeviceHandle             CreateDevice(uint32_t framesOfLatency);
         CommandQueueHandle          CreateCommandQueue(GpuDeviceHandle deviceHdl, CommandType type);
-        bool                        CreateCommandBuffer(GpuDeviceHandle deviceHdl, CommandType type, CommandBuffer& outCmdBuffer);
+        CommandBufferHandle         CreateCommandBuffer(GpuDeviceHandle deviceHdl, CommandType type);
 
         SwapChainHandle             CreateSwapChain(
                                         GpuDeviceHandle deviceHdl,
                                         CommandQueueHandle cmdQueueHdl,
                                         WindowHandle windowHdl,
-                                        uint32_t backBufferCount,
                                         uint32_t pixelWidth,
                                         uint32_t pixelHeight);
 
-        PixelFormat                 GetSwapChainFormat(SwapChainHandle hdl);
+        void                        StartFrame(GpuDeviceHandle deviceHdl, CommandBufferHandle cmdBufferHdl);
+        void                        EndFrame(GpuDeviceHandle deviceHdl, CommandBufferHandle cmdBufferHdl);
 
-        Shader                      CreateShader(GpuDeviceHandle deviceHdl, const char* pFilePath);
+        uint64_t                    GetCurrentFrameIndex(GpuDeviceHandle deviceHdl);
+        PixelFormat                 GetSwapChainFormat(SwapChainHandle hdl);
+        TextureHandle               GetBackBuffer(GpuDeviceHandle deviceHdl, SwapChainHandle hdl);
+
+        ShaderHandle                CreateShader(GpuDeviceHandle deviceHdl, const char* pFilePath);
         ShaderResourceLayoutHandle  CreateShaderResourceLayout(GpuDeviceHandle deviceHdl, const ShaderResourceLayoutDesc& desc);
         ShaderResourceLayoutHandle  CreateShaderResourceLayout(GpuDeviceHandle deviceHdl, const char* pFilePath);
         GfxPipelineHandle           CreateGraphicsPipeline(GpuDeviceHandle deviceHdl, const GfxPipelineDesc& desc);
@@ -50,8 +46,7 @@ namespace biome::rhi
 
         void                        DestroyDevice(GpuDeviceHandle hdl);
         void                        DestroyCommandQueue(CommandQueueHandle hdl);
-        void                        DestroyCommandAllocator(CommandAllocatorHandle hdl);
-        void                        DestroyCommandBuffer(CommandBuffer& cmdBuffer);
+        void                        DestroyCommandBuffer(CommandBufferHandle cmdBufferHdl);
         void                        DestroySwapChain(SwapChainHandle hdl);
         void                        DestroyShaderResourceLayout(ShaderResourceLayoutHandle hdl);
         void                        DestroyGfxPipeline(GfxPipelineHandle hdl);
@@ -61,7 +56,7 @@ namespace biome::rhi
         void                        SignalFence(FenceHandle fenceHdl);
         void                        GPUWaitOnFence(FenceHandle fenceHdl);
         void                        CPUWaitOnFence(FenceHandle fenceHdl);
-        void                        ExecuteCommandBuffer(CommandBuffer& cmdBuffer);
+        void                        ExecuteCommandBuffer(CommandQueueHandle cmdQueueHdl, CommandBufferHandle cmdBufferHdl);
         void                        Present(SwapChainHandle swapChainHdl);
     }
 

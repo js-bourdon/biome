@@ -6,24 +6,26 @@
 #include "biome_core/Core/Defines.h"
 #include "biome_core/Math/Math.h"
 #include "biome_core/Handle/Handle.h"
+#include "biome_core/DataStructures/StaticArray.h"
 
 namespace biome
 {
     namespace rhi
     {
-        using TextureHandle = ParentResourceHandle<0x1F>;
-        using Texture2DHandle = ChildResourceHandle<TextureHandle, 0x01>;
-        using Texture3DHandle = ChildResourceHandle<TextureHandle, 0x02>;
-        using TextureCubeHandle = ChildResourceHandle<TextureHandle, 0x04>;
-        using TextureArrayHandle = ChildResourceHandle<TextureHandle, 0x08>;
-        using TextureSubResource = ChildResourceHandle<TextureHandle, 0x10>;
+        template<typename PtrType, typename HandleType>
+        inline void AsType(PtrType& pPtr, HandleType handle)
+        {
+            pPtr = reinterpret_cast<PtrType>(handle);
+        }
 
-        using BufferHandle = ParentResourceHandle<0x1F>;
-        using ConstantBufferHandle = ChildResourceHandle<BufferHandle, 0x01>;
-        using RWBufferHandle = ChildResourceHandle<BufferHandle, 0x02>;
-        using StructuredBufferHandle = ChildResourceHandle<BufferHandle, 0x04>;
-        using VertexBufferHandle = ChildResourceHandle<BufferHandle, 0x08>;
-        using IndexBufferHandle = ChildResourceHandle<BufferHandle, 0x10>;
+        template<typename PtrType, typename HandleType>
+        inline void AsHandle(const PtrType pPtr, HandleType& handle)
+        {
+            handle = reinterpret_cast<HandleType>(pPtr);
+        }
+
+        typedef uintptr_t TextureHandle;
+        typedef uintptr_t BufferHandle;
 
         typedef Handle DescriptorHeapHandle;
         typedef Handle RenderPassHandle;
@@ -34,12 +36,13 @@ namespace biome
 
         typedef uintptr_t GpuDeviceHandle;
         typedef uintptr_t CommandQueueHandle;
-        typedef uintptr_t CommandListHandle;
+        typedef uintptr_t CommandBufferHandle;
         typedef uintptr_t FenceHandle;
         typedef uintptr_t SwapChainHandle;
-        typedef uintptr_t CommandAllocatorHandle;
         typedef uintptr_t ShaderResourceLayoutHandle;
         typedef uintptr_t GfxPipelineHandle;
         typedef uintptr_t ComputePipelineHandle;
+
+        typedef biome::data::StaticArray<uint8_t> ShaderHandle;
     }
 }

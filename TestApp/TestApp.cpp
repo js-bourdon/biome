@@ -14,6 +14,7 @@
 #include "biome_core/Threading/WorkerThread.h"
 #include "biome_core/Assets/AssetDatabase.h"
 #include "biome_rhi/Systems/DeviceSystem.h"
+#include "biome_rhi/Systems/CommandSystem.h"
 #include "biome_rhi/Descriptors/PipelineDesc.h"
 
 using namespace biome::rhi;
@@ -62,7 +63,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     WindowHandle hwnd = factory::CreateNewWindow(reinterpret_cast<biome::rhi::AppHandle>(hInstance), windowWidth, windowHeight, L"Biome");
     factory::DisplayWindow(hwnd);
 
-    const GpuDeviceHandle deviceHdl = device::CreateDevice();
+    constexpr uint32_t framesOfLatency = 1;
+    const GpuDeviceHandle deviceHdl = device::CreateDevice(framesOfLatency);
     const CommandQueueHandle cmdQueueHdl = device::CreateCommandQueue(deviceHdl, CommandType::Graphics);
     
     // Assets loading
@@ -72,16 +74,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     DestroyDatabase(pAssetDb);
 
     constexpr uint32_t backBufferCount = 2;
-    const SwapChainHandle swapChainHdl = device::CreateSwapChain(deviceHdl, cmdQueueHdl, hwnd, backBufferCount, windowWidth, windowHeight);
+    const SwapChainHandle swapChainHdl = device::CreateSwapChain(deviceHdl, cmdQueueHdl, hwnd, windowWidth, windowHeight);
 
-    device::CommandBuffer cmdBufferHdl;
-    BIOME_ASSERT_ALWAYS_EXEC(device::CreateCommandBuffer(deviceHdl, CommandType::Graphics, cmdBufferHdl));
+    const CommandBufferHandle cmdBufferHdl = device::CreateCommandBuffer(deviceHdl, CommandType::Graphics);
+    BIOME_ASSERT(cmdBufferHdl != biome::Handle_NULL);
 
-    ShaderResourceLayoutHandle rscLayoutHdl = device::CreateShaderResourceLayout(deviceHdl, "Shaders/bin/root_signature.cso");
+    const ShaderResourceLayoutHandle rscLayoutHdl = device::CreateShaderResourceLayout(deviceHdl, "Shaders/bin/root_signature.cso");
     BIOME_ASSERT(rscLayoutHdl != biome::Handle_NULL);
 
-    Shader vertexShader = device::CreateShader(deviceHdl, "Shaders/bin/fullscreen_vs.cso");
-    Shader pixelShader = device::CreateShader(deviceHdl, "Shaders/bin/fullscreen_ps.cso");
+    // TODO: Make actual handles!!!
+    ShaderHandle vertexShader = device::CreateShader(deviceHdl, "Shaders/bin/fullscreen_vs.cso");
+    ShaderHandle pixelShader = device::CreateShader(deviceHdl, "Shaders/bin/fullscreen_ps.cso");
 
     descriptors::GfxPipelineDesc pipelineDesc{};
     pipelineDesc.ResourceLayout = rscLayoutHdl;
@@ -90,11 +93,34 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     pipelineDesc.RenderTargetFormats[0] = device::GetSwapChainFormat(swapChainHdl);
     pipelineDesc.RenderTargetCount = 1;
 
-    GfxPipelineHandle gfxPipeHdl = device::CreateGraphicsPipeline(deviceHdl, pipelineDesc);
+    const GfxPipelineHandle gfxPipeHdl = device::CreateGraphicsPipeline(deviceHdl, pipelineDesc);
     BIOME_ASSERT(gfxPipeHdl != biome::Handle_NULL);
 
     while (!biome::rhi::events::PumpMessages())
     {
+        device::StartFrame(deviceHdl, cmdBufferHdl);
+
+        const TextureHandle backBufferHdl = device::GetBackBuffer(deviceHdl, swapChainHdl);
+
+        commands::TextureStateTransition transition;
+        transition.m_textureHdl = backBufferHdl;
+        transition.m_before = commands::ResourceState::Present;
+        transition.m_after = commands::ResourceState::RenderTarget;
+        commands::ResourceTransition(cmdBufferHdl, &transition, 1);
+
+        commands::ClearRenderTarget(cmdBufferHdl, backBufferHdl, { 0.f, 0.5f, 0.f ,0.f });
+
+        transition.m_before = commands::ResourceState::RenderTarget;
+        transition.m_after = commands::ResourceState::Present;
+        commands::ResourceTransition(cmdBufferHdl, &transition, 1);
+
+        commands::CloseCommandBuffer(cmdBufferHdl);
+        device::ExecuteCommandBuffer(cmdQueueHdl, cmdBufferHdl);
+
+        device::Present(swapChainHdl);
+
+        device::EndFrame(deviceHdl, cmdBufferHdl);
+
         std::this_thread::sleep_for(100ms);
     }
 

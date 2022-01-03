@@ -51,6 +51,15 @@
     <Filter Include="Dependencies">
       <UniqueIdentifier>{dce0bc3a-ba97-469e-94bb-3bbd8512d053}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Resources\Implementations">
+      <UniqueIdentifier>{99a4fffe-2e67-454f-9711-bcdab9aa61e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Resources\Implementations\Windows">
+      <UniqueIdentifier>{278e64a6-c099-4fc5-8385-b978a3634295}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Resources\Implementations\Windows\dx12">
+      <UniqueIdentifier>{173af24b-0af9-4dca-9247-3abe3b36ce60}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -137,6 +146,9 @@
     <ClInclude Include="Resources\Resources.h">
       <Filter>src\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="Systems\Implementations\Windows\dx12\CommandSystem.inl">
+      <Filter>src\Systems\Implementations\Windows\dx12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Events\MessagePump.cpp">
@@ -151,6 +163,9 @@
     <ClCompile Include="Systems\DeviceSystem.cpp">
       <Filter>src\Systems</Filter>
     </ClCompile>
+    <ClCompile Include="Systems\CommandSystem.cpp">
+      <Filter>src\Systems</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Events\Implementations\Windows\MessagePump.inl">
@@ -163,5 +178,8 @@
       <Filter>src\Systems\Implementations\Windows\dx12</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="Resources\Implementations\Windows\dx12\Resources.inl">
+      <Filter>src\Resources\Implementations\Windows\dx12</Filter>
+    </None>
   </ItemGroup>
 </Project>

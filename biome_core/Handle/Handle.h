@@ -91,6 +91,7 @@ namespace biome
 
     static_assert(sizeof(Handle) == sizeof(uintptr_t));
 
+    /*
     typedef Handle::ValueType ResourceTypeMask;
 
     template<ResourceTypeMask TypeMask>
@@ -136,4 +137,5 @@ namespace biome
             ParentType::m_Handle.SetValue(ParentType::m_Handle.GetValue() | ParentType::s_SubTypeMask);
         }
     };
+    */
 }

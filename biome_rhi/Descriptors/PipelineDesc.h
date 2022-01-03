@@ -5,13 +5,10 @@
 #include "biome_rhi/Descriptors/DepthStencilStateDesc.h"
 #include "biome_rhi/Descriptors/RasterizerStateDesc.h"
 #include "biome_rhi/Descriptors/PixelFormats.h"
-#include "biome_rhi/Resources/Resources.h"
 #include "biome_rhi/Resources/ResourceHandles.h"
 
 namespace biome::rhi
 {
-    using namespace resources;
-
     namespace descriptors
     {
         struct GfxPipelineDesc
@@ -20,8 +17,8 @@ namespace biome::rhi
 
             ShaderResourceLayoutHandle  ResourceLayout {};
             InputLayoutDesc             InputLayout {};
-            Shader                      VertexShader {};
-            Shader                      FragmentShader {};
+            ShaderHandle                VertexShader {};
+            ShaderHandle                FragmentShader {};
             BlendStateDesc              BlendState {};
             DepthStencilStateDesc       DepthStencilState {};
             RasterizerStateDesc         RasterizerState {};

@@ -1,6 +1,9 @@
 #pragma once
 
 #include "biome_rhi/Resources/ResourceHandles.h"
+#include "biome_core/Math/Math.h"
+
+using namespace biome::math;
 
 namespace biome::rhi
 {
@@ -13,13 +16,14 @@ namespace biome::rhi
     {
         void CloseCommandBuffer(CommandBufferHandle cmdBufferHdl);
 
-        void SetComputeShaderResourceLayout(ShaderResourceLayoutHandle srlHdl);
-        void SetGraphicsShaderResourceLayout(ShaderResourceLayoutHandle srlHdl);
-        void SetComputeConstant(uint32_t index, uint32_t value, uint32_t destOffsetInValues);
-        void SetDescriptorHeaps(uint32_t count, const DescriptorHeapHandle* pHeapHdls);
-        void SetComputeDescriptorTable(uint32_t index, const DescriptorTable& table);
-        void SetGraphicsDescriptorTable(uint32_t index, const DescriptorTable& table);
-        void SetPipeline(PipelineHandle pipelineHdl);
+        void SetComputeShaderResourceLayout(CommandBufferHandle cmdBufferHdl, ShaderResourceLayoutHandle srlHdl);
+        void SetGraphicsShaderResourceLayout(CommandBufferHandle cmdBufferHdl, ShaderResourceLayoutHandle srlHdl);
+        void SetComputeConstant(CommandBufferHandle cmdBufferHdl, uint32_t index, uint32_t value, uint32_t destOffsetInValues);
+        void SetDescriptorHeaps(CommandBufferHandle cmdBufferHdl, uint32_t count, const DescriptorHeapHandle* pHeapHdls);
+        void SetComputeDescriptorTable(CommandBufferHandle cmdBufferHdl, uint32_t index, const DescriptorTable& table);
+        void SetGraphicsDescriptorTable(CommandBufferHandle cmdBufferHdl, uint32_t index, const DescriptorTable& table);
+        void SetGfxPipeline(CommandBufferHandle cmdBufferHdl, GfxPipelineHandle pipelineHdl);
+        void SetComputePipeline(CommandBufferHandle cmdBufferHdl, ComputePipelineHandle pipelineHdl);
 
         void DispatchCompute(CommandBufferHandle cmdBufferHdl, uint32_t x, uint32_t y, uint32_t z);
 
@@ -39,16 +43,16 @@ namespace biome::rhi
             uint32_t startInstance);
 
         void ClearDepthStencil(CommandBufferHandle cmdBufferHdl, TextureHandle depthStencilHdl);
-        void ClearRenderTarget(CommandBufferHandle cmdBufferHdl, TextureHandle renderTargetHdl);
+        void ClearRenderTarget(CommandBufferHandle cmdBufferHdl, TextureHandle renderTargetHdl, Vector4 clearColor);
 
         // IA
-        void SetIndexBuffer(CommandBufferHandle cmdBufferHdl, IndexBufferHandle indexBufferHdl);
+        void SetIndexBuffer(CommandBufferHandle cmdBufferHdl, BufferHandle indexBufferHdl);
         void SetPrimitiveTopology(CommandBufferHandle cmdBufferHdl, PrimitiveTopology topology);
         void SetVertexBuffers(
             CommandBufferHandle cmdBufferHdl, 
             uint32_t startSlot, 
             uint32_t bufferCount, 
-            const VertexBufferHandle* pVertexBufferHdls);
+            const BufferHandle* pVertexBufferHdls);
 
         // OM
         void OMSetBlendFactor(CommandBufferHandle cmdBufferHdl, const float* pBlendfactors);
@@ -60,7 +64,34 @@ namespace biome::rhi
             const TextureHandle* pDepthStencil);
 
         // RS
-        void RSSetScissorRects(uint32_t count, const Rectangle* pRectangles);
-        void RSSetViewports(uint32_t count, const Viewport* pViewports);
+        void RSSetScissorRects(CommandBufferHandle cmdBufferHdl, uint32_t count, const Rectangle* pRectangles);
+        void RSSetViewports(CommandBufferHandle cmdBufferHdl, uint32_t count, const Viewport* pViewports);
+
+        enum class ResourceState
+        {
+            Common                  = 0x0000,
+            VertexBuffer            = 0x0001,
+            ConstantBuffer          = 0x0002,
+            IndexBuffer             = 0x0004,
+            RenderTarget            = 0x0008,
+            UnorderedAccess         = 0x0010,
+            DepthWrite              = 0x0020,
+            DepthRead               = 0x0040,
+            GeometryShaderResource  = 0x0080,
+            FragmentShaderResource  = 0x0100,
+            IndirectArgument        = 0x0200,
+            CopyDestination         = 0x0400,
+            CopySource              = 0x0800,
+            Present                 = 0x1000,
+        };
+
+        struct TextureStateTransition
+        {
+            TextureHandle m_textureHdl { Handle_NULL };
+            ResourceState m_before {};
+            ResourceState m_after {};
+        };
+
+        void ResourceTransition(CommandBufferHandle cmdBufferHdl, const TextureStateTransition* transitions, uint32_t transitionCount);
     }
 }
