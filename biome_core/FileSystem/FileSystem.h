@@ -25,7 +25,7 @@ namespace biome
         uint8_t* ReadFileContent(const char* pSrcPath, size_t& o_FileSize);
 
         template<typename AllocatorType = ThreadHeapAllocator>
-        StaticArray<uint8_t, AllocatorType> ReadFileContent(const char* pSrcPath);
+        StaticArray<uint8_t, false, AllocatorType> ReadFileContent(const char* pSrcPath);
 
         str_smart_ptr&& ExtractDirectoryPath(const char* pFilePath);
         str_smart_ptr&& AppendPaths(const char* pDirectoryPath, const char* pFilePath);

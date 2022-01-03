@@ -9,7 +9,11 @@ namespace biome
 {
     namespace data
     {
-        template<typename ValueType, typename AllocatorType = ThreadHeapAllocator>
+        constexpr bool NoCleanConstructDestruct = false;
+        constexpr bool CleanConstructDestruct = true;
+
+        // TODO: Have a version dealing with constructors / destructors of items.
+        template<typename ValueType, bool CleanConstructDelete = false, typename AllocatorType = ThreadHeapAllocator>
         class StaticArray
         {
         public:
@@ -27,7 +31,7 @@ namespace biome
 
             ValueType&          operator[](size_t index);
             const ValueType&    operator[](size_t index) const;
-            void                operator=(StaticArray<ValueType, AllocatorType>&& other);
+            void                operator=(StaticArray<ValueType, CleanConstructDelete, AllocatorType>&& other) noexcept;
 
         private:
 

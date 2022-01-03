@@ -6,27 +6,35 @@
 
 using namespace biome::data;
 
-template<typename ValueType, typename AllocatorType>
-StaticArray<ValueType, AllocatorType>::StaticArray()
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+StaticArray<ValueType, CleanConstructDelete, AllocatorType>::StaticArray()
     : m_pData(nullptr)
     , m_size(0)
 {
 
 }
 
-template<typename ValueType, typename AllocatorType>
-StaticArray<ValueType, AllocatorType>::StaticArray(size_t size)
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+StaticArray<ValueType, CleanConstructDelete, AllocatorType>::StaticArray(size_t size)
     : m_pData(nullptr)
     , m_size(size)
 {
     if(size > 0)
     {
         m_pData = static_cast<ValueType*>(AllocatorType::Allocate(sizeof(ValueType) * size));
+
+        if constexpr (CleanConstructDelete)
+        {
+            for (size_t i = 0; i < m_size; ++i)
+            {
+                new(m_pData + i) ValueType();
+            }
+        }
     }
 }
 
-template<typename ValueType, typename AllocatorType>
-StaticArray<ValueType, AllocatorType>::StaticArray(StaticArray<ValueType, AllocatorType>&& other)
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+StaticArray<ValueType, CleanConstructDelete, AllocatorType>::StaticArray(StaticArray<ValueType, CleanConstructDelete, AllocatorType>&& other)
     : m_pData(other.m_pData)
     , m_size(other.m_size)
 {
@@ -34,43 +42,51 @@ StaticArray<ValueType, AllocatorType>::StaticArray(StaticArray<ValueType, Alloca
     other.m_size = 0;
 }
 
-template<typename ValueType, typename AllocatorType>
-StaticArray<ValueType, AllocatorType>::~StaticArray()
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+StaticArray<ValueType, CleanConstructDelete, AllocatorType>::~StaticArray()
 {
     if(m_pData != nullptr)
     {
+        if constexpr (CleanConstructDelete)
+        {
+            for (size_t i = 0; i < m_size; ++i)
+            {
+                m_pData[i].~ValueType();
+            }
+        }
+
         AllocatorType::Release(m_pData);
     }
 }
 
-template<typename ValueType, typename AllocatorType>
-ValueType* StaticArray<ValueType, AllocatorType>::Data()
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+ValueType* StaticArray<ValueType, CleanConstructDelete, AllocatorType>::Data()
 {
     return m_pData;
 }
 
-template<typename ValueType, typename AllocatorType>
-const ValueType* StaticArray<ValueType, AllocatorType>::Data() const
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+const ValueType* StaticArray<ValueType, CleanConstructDelete, AllocatorType>::Data() const
 {
     return m_pData;
 }
 
-template<typename ValueType, typename AllocatorType>
-ValueType& StaticArray<ValueType, AllocatorType>::operator[](size_t index)
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+ValueType& StaticArray<ValueType, CleanConstructDelete, AllocatorType>::operator[](size_t index)
 {
     BIOME_ASSERT(index < m_size);
     return m_pData[index];
 }
 
-template<typename ValueType, typename AllocatorType>
-const ValueType& StaticArray<ValueType, AllocatorType>::operator[](size_t index) const
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+const ValueType& StaticArray<ValueType, CleanConstructDelete, AllocatorType>::operator[](size_t index) const
 {
     BIOME_ASSERT(index < m_size);
     return m_pData[index];
 }
 
-template<typename ValueType, typename AllocatorType>
-void StaticArray<ValueType, AllocatorType>::operator=(StaticArray<ValueType, AllocatorType>&& other)
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+void StaticArray<ValueType, CleanConstructDelete, AllocatorType>::operator=(StaticArray<ValueType, CleanConstructDelete, AllocatorType>&& other) noexcept
 {
     m_pData = other.m_pData;
     m_size = other.m_size;

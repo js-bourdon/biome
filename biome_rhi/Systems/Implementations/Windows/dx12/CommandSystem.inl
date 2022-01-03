@@ -190,7 +190,7 @@ void commands::ResourceTransition(CommandBufferHandle cmdBufferHdl, const Textur
         D3D12_RESOURCE_BARRIER& barrier = pBarriers[i];
         barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-        barrier.Transition.pResource = pTexture->m_pResource;
+        barrier.Transition.pResource = pTexture->m_pResource.Get();
         barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         barrier.Transition.StateBefore = ToNativeResourceState(transition.m_before);
         barrier.Transition.StateAfter = ToNativeResourceState(transition.m_after);

@@ -26,7 +26,7 @@ uint8_t* biome::filesystem::ReadFileContent(const char* pSrcPath, size_t& o_File
 }
 
 template<typename AllocatorType>
-StaticArray<uint8_t, AllocatorType> biome::filesystem::ReadFileContent(const char* pSrcPath)
+StaticArray<uint8_t, false, AllocatorType> biome::filesystem::ReadFileContent(const char* pSrcPath)
 {
     FILE* pFile;
     errno_t err = fopen_s(&pFile, pSrcPath, "rb");
@@ -37,7 +37,7 @@ StaticArray<uint8_t, AllocatorType> biome::filesystem::ReadFileContent(const cha
         size_t fileSize = ftell(pFile);
         fseek(pFile, 0, SEEK_SET);
 
-        StaticArray<uint8_t, AllocatorType> content(fileSize);
+        StaticArray<uint8_t, false, AllocatorType> content(fileSize);
         uint8_t* pContent = content.Data();
 
         const size_t bytesRead = fread(pContent, sizeof(uint8_t), fileSize, pFile);
@@ -48,5 +48,5 @@ StaticArray<uint8_t, AllocatorType> biome::filesystem::ReadFileContent(const cha
         return content;
     }
 
-    return StaticArray<uint8_t, AllocatorType>(0);
+    return StaticArray<uint8_t, false, AllocatorType>(0);
 }
