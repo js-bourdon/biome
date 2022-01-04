@@ -432,15 +432,41 @@ namespace
     }
 }
 
-void device::StartFrame([[maybe_unused]] GpuDeviceHandle deviceHdl, [[maybe_unused]] CommandBufferHandle cmdBufferHdl)
+void device::StartFrame(
+    [[maybe_unused]] GpuDeviceHandle deviceHdl, 
+    [[maybe_unused]] CommandQueueHandle cmdQueueHdl, 
+    [[maybe_unused]] CommandBufferHandle cmdBufferHdl)
 {
 
 }
 
-void device::EndFrame([[maybe_unused]] GpuDeviceHandle deviceHdl, CommandBufferHandle cmdBufferHdl)
+void device::EndFrame(
+    GpuDeviceHandle deviceHdl, 
+    CommandQueueHandle cmdQueueHdl, 
+    CommandBufferHandle cmdBufferHdl)
 {
     GpuDevice* pGpuDevice;
     AsType(pGpuDevice, deviceHdl);
+
+    ID3D12CommandQueue* pCmdQueue;
+    AsType(pCmdQueue, cmdQueueHdl);
+
+    const uint64_t currentFrame = pGpuDevice->m_currentFrame;
+    BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pCmdQueue->Signal(pGpuDevice->m_pFrameFence.Get(), currentFrame)));
+
+    const uint32_t framesOfLatency = pGpuDevice->m_framesOfLatency;
+    if (currentFrame >= framesOfLatency)
+    {
+        ID3D12Fence* pFrameFence = pGpuDevice->m_pFrameFence.Get();
+        const uint64_t waitFrame = currentFrame - framesOfLatency;
+        const HANDLE fenceEvent = pGpuDevice->m_fenceEvent;
+
+        if (pFrameFence->GetCompletedValue() < waitFrame)
+        {
+            pFrameFence->SetEventOnCompletion(waitFrame, fenceEvent);
+            WaitForSingleObject(fenceEvent, INFINITE);
+        }
+    }
 
     const uint64_t nextFrame = ++pGpuDevice->m_currentFrame;
     const uint64_t nextAllocatorIndex = nextFrame % (pGpuDevice->m_framesOfLatency + 1);
@@ -481,30 +507,40 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
         ComPtr<IDXGIAdapter1> hardwareAdapter;
         if (GetHardwareAdapter(factory.Get(), &hardwareAdapter))
         {
-            ID3D12Device* pDevice;
+            ComPtr<ID3D12Device> pDevice {};
+            ComPtr<ID3D12DescriptorHeap> pRtvDescriptorHeap {};
+            ComPtr<ID3D12Fence> pFrameFence {};
 
             if (SUCCEEDED(D3D12CreateDevice(
                 hardwareAdapter.Get(),
                 D3D_FEATURE_LEVEL_12_1,
-                IID_PPV_ARGS(&pDevice))))
+                IID_PPV_ARGS(pDevice.ReleaseAndGetAddressOf()))))
             {
-                GpuDevice* pGpuDevice = new GpuDevice();
-                pGpuDevice->m_pDevice = pDevice;
-                pGpuDevice->m_framesOfLatency = framesOfLatency;
-
                 D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
                 rtvHeapDesc.NumDescriptors = framesOfLatency + 1;
                 rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
                 rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-                if (SUCCEEDED(pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&pGpuDevice->m_pRtvDescriptorHeap))))
+                if (SUCCEEDED(pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(pRtvDescriptorHeap.ReleaseAndGetAddressOf()))))
                 {
-                    pGpuDevice->m_rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-                    AsHandle(pGpuDevice, deviceHdl);
-                }
-                else
-                {
-                    delete pGpuDevice;
+                    if (SUCCEEDED(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(pFrameFence.ReleaseAndGetAddressOf()))))
+                    {
+                        const HANDLE fenceEvent = CreateEvent(
+                            nullptr,    // Security attributes
+                            FALSE,      // Manual reset
+                            FALSE,      // Initial state
+                            L"FrameFenceEvent");
+
+                        GpuDevice* pGpuDevice = new GpuDevice();
+                        pGpuDevice->m_pDevice = pDevice;
+                        pGpuDevice->m_pRtvDescriptorHeap = pRtvDescriptorHeap;
+                        pGpuDevice->m_pFrameFence = pFrameFence;
+                        pGpuDevice->m_fenceEvent = fenceEvent;
+                        pGpuDevice->m_framesOfLatency = framesOfLatency;
+                        pGpuDevice->m_rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+                        AsHandle(pGpuDevice, deviceHdl);
+                    }
                 }
             }
         }
@@ -912,6 +948,7 @@ void device::DestroyDevice(GpuDeviceHandle hdl)
 {
     GpuDevice* pDevice;
     AsType(pDevice, hdl);
+    CloseHandle(pDevice->m_fenceEvent);
     delete pDevice;
 }
 
@@ -987,5 +1024,12 @@ void device::Present(SwapChainHandle swapChainHdl)
 {
     SwapChain* pSwapChain;
     AsType(pSwapChain, swapChainHdl);
-    pSwapChain->m_pSwapChain->Present(1, 0);
+
+    DXGI_PRESENT_PARAMETERS params;
+    params.DirtyRectsCount = 0;
+    params.pDirtyRects = nullptr;
+    params.pScrollOffset = nullptr;
+    params.pScrollRect = nullptr;
+
+    pSwapChain->m_pSwapChain->Present1(1, 0, &params);
 }

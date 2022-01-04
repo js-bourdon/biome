@@ -30,8 +30,8 @@ namespace biome::rhi
                                         uint32_t pixelWidth,
                                         uint32_t pixelHeight);
 
-        void                        StartFrame(GpuDeviceHandle deviceHdl, CommandBufferHandle cmdBufferHdl);
-        void                        EndFrame(GpuDeviceHandle deviceHdl, CommandBufferHandle cmdBufferHdl);
+        void                        StartFrame(GpuDeviceHandle deviceHdl, CommandQueueHandle cmdQueueHdl, CommandBufferHandle cmdBufferHdl);
+        void                        EndFrame(GpuDeviceHandle deviceHdl, CommandQueueHandle cmdQueueHdl, CommandBufferHandle cmdBufferHdl);
 
         uint64_t                    GetCurrentFrameIndex(GpuDeviceHandle deviceHdl);
         PixelFormat                 GetSwapChainFormat(SwapChainHandle hdl);

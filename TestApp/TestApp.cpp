@@ -98,7 +98,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     while (!biome::rhi::events::PumpMessages())
     {
-        device::StartFrame(deviceHdl, cmdBufferHdl);
+        device::StartFrame(deviceHdl, cmdQueueHdl, cmdBufferHdl);
 
         const TextureHandle backBufferHdl = device::GetBackBuffer(deviceHdl, swapChainHdl);
 
@@ -119,7 +119,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         device::Present(swapChainHdl);
 
-        device::EndFrame(deviceHdl, cmdBufferHdl);
+        device::EndFrame(deviceHdl, cmdQueueHdl, cmdBufferHdl);
 
         std::this_thread::sleep_for(100ms);
     }
