@@ -643,30 +643,29 @@ SwapChainHandle device::CreateSwapChain(
             swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
             swapChainDesc.SampleDesc.Count = 1;
 
-            IDXGISwapChain1* pSwapChain;
+            SwapChain* pInternalSwapChain = new SwapChain();
+            pInternalSwapChain->m_pixelWidth = pixelWidth;
+            pInternalSwapChain->m_pixelHeight = pixelHeight;
+
             if(SUCCEEDED(factory->CreateSwapChainForHwnd(
                 pCmdQueue,        // Swap chain needs the queue so that it can force a flush on it.
                 windowHWND,
                 &swapChainDesc,
                 nullptr,
                 nullptr,
-                &pSwapChain
+                pInternalSwapChain->m_pSwapChain.ReleaseAndGetAddressOf()
             )))
             {
                 // This sample does not support fullscreen transitions.
                 BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(factory->MakeWindowAssociation(windowHWND, DXGI_MWA_NO_ALT_ENTER)));
-                SwapChain* pInternalSwapChain = new SwapChain();
-                pInternalSwapChain->m_pSwapChain = pSwapChain;
-                pInternalSwapChain->m_pixelWidth = pixelWidth;
-                pInternalSwapChain->m_pixelHeight = pixelHeight;
-
+                
                 D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle(pGpuDevice->m_pRtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
                 StaticArray<TextureHandle> backBufferHandles(backBufferCount);
                 for (uint32_t i = 0; i < backBufferCount; ++i)
                 {
                     ID3D12Resource* pResource;
-                    const HRESULT hr = pSwapChain->GetBuffer(i, IID_PPV_ARGS(&pResource));
+                    const HRESULT hr = pInternalSwapChain->m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&pResource));
                     if (SUCCEEDED(hr))
                     {
                         pGpuDevice->m_pDevice->CreateRenderTargetView(pResource, nullptr, rtvHandle);
