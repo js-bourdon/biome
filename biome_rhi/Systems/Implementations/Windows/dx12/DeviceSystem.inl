@@ -855,7 +855,7 @@ GfxPipelineHandle device::CreateGraphicsPipeline(GpuDeviceHandle deviceHdl, cons
     d3dDesc.PS.pShaderBytecode = desc.FragmentShader.Data();
     d3dDesc.PS.BytecodeLength = desc.FragmentShader.Size();
     d3dDesc.NodeMask = 0;
-    d3dDesc.SampleMask = 0;
+    d3dDesc.SampleMask = 0xFFFFFFFF;
     d3dDesc.DSVFormat = ToNativeFormat(desc.DepthFormat);
     d3dDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     d3dDesc.SampleDesc.Count = 1;
