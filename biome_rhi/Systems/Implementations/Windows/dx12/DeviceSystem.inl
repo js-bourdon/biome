@@ -468,6 +468,19 @@ void device::EndFrame(
         }
     }
 
+    // DEBUG PURPOSES
+    {
+        /*
+        ID3D12Fence* pFrameFence = pGpuDevice->m_pFrameFence.Get();
+        const HANDLE fenceEvent = pGpuDevice->m_fenceEvent;
+        if (pFrameFence->GetCompletedValue() < currentFrame)
+        {
+            pFrameFence->SetEventOnCompletion(currentFrame, fenceEvent);
+            WaitForSingleObject(fenceEvent, INFINITE);
+        }
+        //*/
+    }
+
     const uint64_t nextFrame = ++pGpuDevice->m_currentFrame;
     const uint64_t nextAllocatorIndex = nextFrame % (pGpuDevice->m_framesOfLatency + 1);
 
@@ -857,16 +870,14 @@ GfxPipelineHandle device::CreateGraphicsPipeline(GpuDeviceHandle deviceHdl, cons
         D3D12_RENDER_TARGET_BLEND_DESC& d3dBlendDesc = d3dDesc.BlendState.RenderTarget[rtIndex];
         const BlendStateDesc& blendDesc = desc.BlendState;
 
-        if(d3dBlendDesc.BlendEnable = desc.BlendState.IsEnabled)
-        {
-            d3dBlendDesc.BlendOp = ToNativeBlendOperation(blendDesc.ColorOperation);
-            d3dBlendDesc.BlendOpAlpha = ToNativeBlendOperation(blendDesc.AlphaOperation);
-            d3dBlendDesc.DestBlend = ToNativeBlend(blendDesc.DestinationColor);
-            d3dBlendDesc.DestBlendAlpha = ToNativeBlend(blendDesc.DestinationAlpha);
-            d3dBlendDesc.RenderTargetWriteMask = ToNativeWriteMask(blendDesc.ColorWrite, blendDesc.AlphaWrite);
-            d3dBlendDesc.SrcBlend = ToNativeBlend(blendDesc.SourceColor);
-            d3dBlendDesc.SrcBlendAlpha = ToNativeBlend(blendDesc.SourceAlpha);
-        }
+        d3dBlendDesc.BlendEnable = desc.BlendState.IsEnabled;
+        d3dBlendDesc.BlendOp = ToNativeBlendOperation(blendDesc.ColorOperation);
+        d3dBlendDesc.BlendOpAlpha = ToNativeBlendOperation(blendDesc.AlphaOperation);
+        d3dBlendDesc.DestBlend = ToNativeBlend(blendDesc.DestinationColor);
+        d3dBlendDesc.DestBlendAlpha = ToNativeBlend(blendDesc.DestinationAlpha);
+        d3dBlendDesc.RenderTargetWriteMask = ToNativeWriteMask(blendDesc.ColorWrite, blendDesc.AlphaWrite);
+        d3dBlendDesc.SrcBlend = ToNativeBlend(blendDesc.SourceColor);
+        d3dBlendDesc.SrcBlendAlpha = ToNativeBlend(blendDesc.SourceAlpha);
     }
 
     D3D12_RASTERIZER_DESC& d3dRasterDesc = d3dDesc.RasterizerState;

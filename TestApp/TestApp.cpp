@@ -16,6 +16,8 @@
 #include "biome_rhi/Systems/DeviceSystem.h"
 #include "biome_rhi/Systems/CommandSystem.h"
 #include "biome_rhi/Descriptors/PipelineDesc.h"
+#include "biome_rhi/Descriptors/Viewport.h"
+#include "biome_rhi/Descriptors/Rectangle.h"
 
 using namespace biome::rhi;
 using namespace biome::memory;
@@ -92,15 +94,37 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     pipelineDesc.FragmentShader = std::move(pixelShader);
     pipelineDesc.RenderTargetFormats[0] = device::GetSwapChainFormat(swapChainHdl);
     pipelineDesc.RenderTargetCount = 1;
+    pipelineDesc.BlendState.IsEnabled = false;
+    pipelineDesc.RasterizerState.DepthClip = false;
 
     const GfxPipelineHandle gfxPipeHdl = device::CreateGraphicsPipeline(deviceHdl, pipelineDesc);
     BIOME_ASSERT(gfxPipeHdl != biome::Handle_NULL);
+
+    biome::rhi::Rectangle scissorRect;
+    scissorRect.m_left = 0;
+    scissorRect.m_right = windowWidth;
+    scissorRect.m_top = 0;
+    scissorRect.m_bottom = windowHeight;
+
+    biome::rhi::Viewport viewport;
+    viewport.m_x = 0;
+    viewport.m_y = 0;
+    viewport.m_width = windowWidth;
+    viewport.m_height = windowHeight;
+    viewport.m_minDepth = 0.f;
+    viewport.m_maxDepth = 1.f;
 
     while (!biome::rhi::events::PumpMessages())
     {
         device::StartFrame(deviceHdl, cmdQueueHdl, cmdBufferHdl);
 
         const TextureHandle backBufferHdl = device::GetBackBuffer(deviceHdl, swapChainHdl);
+
+        commands::SetGraphicsShaderResourceLayout(cmdBufferHdl, rscLayoutHdl);
+        commands::SetGfxPipeline(cmdBufferHdl, gfxPipeHdl);
+        commands::SetPrimitiveTopology(cmdBufferHdl, PrimitiveTopology::TriangleList);
+        commands::RSSetScissorRects(cmdBufferHdl, 1, &scissorRect);
+        commands::RSSetViewports(cmdBufferHdl, 1, &viewport);
 
         commands::TextureStateTransition transition;
         transition.m_textureHdl = backBufferHdl;
@@ -109,6 +133,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         commands::ResourceTransition(cmdBufferHdl, &transition, 1);
 
         commands::ClearRenderTarget(cmdBufferHdl, backBufferHdl, { 0.f, 0.5f, 0.f ,0.f });
+        commands::OMSetRenderTargets(cmdBufferHdl, 1, &backBufferHdl, nullptr);
+        commands::DrawInstanced(cmdBufferHdl, 3, 1, 0, 0);
 
         transition.m_before = commands::ResourceState::RenderTarget;
         transition.m_after = commands::ResourceState::Present;

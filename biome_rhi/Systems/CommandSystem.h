@@ -27,14 +27,14 @@ namespace biome::rhi
 
         void DispatchCompute(CommandBufferHandle cmdBufferHdl, uint32_t x, uint32_t y, uint32_t z);
 
-        void DrawIndexedInstanced(
+        void DrawInstanced(
             CommandBufferHandle cmdBufferHdl,
             uint32_t vertexCountPerInstance,
             uint32_t instanceCount,
             uint32_t startVertex,
             uint32_t startInstance);
 
-        void DrawInstanced(
+        void DrawIndexedInstanced(
             CommandBufferHandle cmdBufferHdl, 
             uint32_t indexCountPerInstance, 
             uint32_t instanceCount, 
