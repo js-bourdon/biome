@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <utility>
 #include <limits>
+#include <memory>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>

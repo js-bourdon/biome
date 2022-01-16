@@ -128,16 +128,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         commands::TextureStateTransition transition;
         transition.m_textureHdl = backBufferHdl;
-        transition.m_before = commands::ResourceState::Present;
-        transition.m_after = commands::ResourceState::RenderTarget;
+        transition.m_before = ResourceState::Present;
+        transition.m_after = ResourceState::RenderTarget;
         commands::ResourceTransition(cmdBufferHdl, &transition, 1);
 
         commands::ClearRenderTarget(cmdBufferHdl, backBufferHdl, { 0.f, 0.5f, 0.f ,0.f });
         commands::OMSetRenderTargets(cmdBufferHdl, 1, &backBufferHdl, nullptr);
         commands::DrawInstanced(cmdBufferHdl, 3, 1, 0, 0);
 
-        transition.m_before = commands::ResourceState::RenderTarget;
-        transition.m_after = commands::ResourceState::Present;
+        transition.m_before = ResourceState::RenderTarget;
+        transition.m_after = ResourceState::Present;
         commands::ResourceTransition(cmdBufferHdl, &transition, 1);
 
         commands::CloseCommandBuffer(cmdBufferHdl);

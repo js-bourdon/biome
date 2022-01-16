@@ -149,6 +149,9 @@
     <ClInclude Include="Systems\Implementations\Windows\dx12\CommandSystem.inl">
       <Filter>src\Systems\Implementations\Windows\dx12</Filter>
     </ClInclude>
+    <ClInclude Include="Systems\SystemUtils.h">
+      <Filter>src\Systems</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Events\MessagePump.cpp">
@@ -180,6 +183,9 @@
     <None Include="packages.config" />
     <None Include="Resources\Implementations\Windows\dx12\Resources.inl">
       <Filter>src\Resources\Implementations\Windows\dx12</Filter>
+    </None>
+    <None Include="Systems\Implementations\Windows\dx12\SystemUtils.inl">
+      <Filter>src\Systems\Implementations\Windows\dx12</Filter>
     </None>
   </ItemGroup>
 </Project>

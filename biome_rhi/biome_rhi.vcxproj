@@ -197,6 +197,7 @@
     <ClInclude Include="Systems\DeviceSystem.h" />
     <ClInclude Include="Systems\Implementations\Windows\dx12\CommandSystem.inl" />
     <ClInclude Include="Systems\SystemEnums.h" />
+    <ClInclude Include="Systems\SystemUtils.h" />
     <ClInclude Include="WindowFactory\WindowFactory.h" />
   </ItemGroup>
   <ItemGroup>
@@ -216,6 +217,7 @@
     <None Include="packages.config" />
     <None Include="Resources\Implementations\Windows\dx12\Resources.inl" />
     <None Include="Systems\Implementations\Windows\dx12\DeviceSystem.inl" />
+    <None Include="Systems\Implementations\Windows\dx12\SystemUtils.inl" />
     <None Include="WindowFactory\Implementations\Windows\WindowFactory.inl" />
   </ItemGroup>
   <ItemGroup>

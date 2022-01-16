@@ -1,6 +1,7 @@
 #pragma once
 
 #include "biome_rhi/Systems/DeviceSystem.h"
+#include "biome_rhi/Systems/SystemUtils.h"
 #include "biome_rhi/Dependencies/d3d12.h"
 #include "biome_rhi/Descriptors/ShaderResourceLayoutDesc.h"
 #include "biome_rhi/Descriptors/PipelineDesc.h"
@@ -952,6 +953,85 @@ ComputePipelineHandle device::CreateComputePipeline(GpuDeviceHandle /*deviceHdl*
 DescriptorHeapHandle device::CreateDescriptorHeap(GpuDeviceHandle /*deviceHdl*/)
 {
     return Handle_NULL;
+}
+
+BufferHandle CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t bufferByteSize)
+{
+    BufferHandle bufferHdl = Handle_NULL;
+    GpuDevice* pDevice = ToType(deviceHdl);
+
+    // TODO: Use placed resources
+
+    D3D12_RESOURCE_DESC rscDesc;
+    rscDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    rscDesc.Alignment = 0;
+    rscDesc.Width = bufferByteSize;
+    rscDesc.Height = 1;
+    rscDesc.DepthOrArraySize = 1;
+    rscDesc.MipLevels = 1;
+    rscDesc.Format = DXGI_FORMAT_UNKNOWN;
+    rscDesc.SampleDesc.Count = 1;
+    rscDesc.SampleDesc.Quality = 0;
+    rscDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    rscDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    const D3D12_RESOURCE_STATES nativeRscState = [type]()
+    {
+        switch (type)
+        {
+        case BufferType::Vertex:
+        case BufferType::Constant:
+            return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+        default:
+            BIOME_FAIL_MSG("Unsupported BufferType");
+            return D3D12_RESOURCE_STATE_COMMON;
+        }
+    }();
+
+    std::unique_ptr<Buffer> spBuffer = std::make_unique<Buffer>();
+
+    D3D12_HEAP_PROPERTIES heapProps;
+    heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+    heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
+    heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+    heapProps.CreationNodeMask = 0;
+    heapProps.VisibleNodeMask = 0;
+
+    HRESULT hr = pDevice->m_pDevice->CreateCommittedResource(
+        &heapProps, 
+        D3D12_HEAP_FLAG_NONE, 
+        &rscDesc, 
+        nativeRscState, 
+        nullptr, 
+        IID_PPV_ARGS(spBuffer->m_pResource.ReleaseAndGetAddressOf()));
+
+    if (FAILED(hr))
+    {
+        return bufferHdl;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+        heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
+        heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+
+        hr = pDevice->m_pDevice->CreateCommittedResource(
+            &heapProps,
+            D3D12_HEAP_FLAG_NONE,
+            &rscDesc,
+            nativeRscState,
+            nullptr,
+            IID_PPV_ARGS(spBuffer->m_pStaging.ReleaseAndGetAddressOf()));
+
+        if (FAILED(hr))
+        {
+            return bufferHdl;
+        }
+    }
+
+    Buffer* pBuffer = spBuffer.release();
+    return ToHandle(pBuffer);
 }
 
 void device::DestroyDevice(GpuDeviceHandle hdl)
