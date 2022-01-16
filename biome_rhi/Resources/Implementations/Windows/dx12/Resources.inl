@@ -42,9 +42,15 @@ namespace biome::rhi
         struct Buffer
         {
             ComPtr<ID3D12Resource>      m_pResource { nullptr };
+            ComPtr<ID3D12Resource>      m_pStaging { nullptr };
             D3D12_CPU_DESCRIPTOR_HANDLE m_srv {};
             D3D12_CPU_DESCRIPTOR_HANDLE m_uav {};
             size_t                      m_byteSize { 0 };
+        };
+
+        struct DescriptorHeap
+        {
+
         };
     }
 
@@ -102,6 +108,20 @@ namespace biome::rhi
     {
         BufferHandle hdl;
         AsHandle(pBuffer, hdl);
+        return hdl;
+    }
+
+    inline DescriptorHeap* ToType(DescriptorHeapHandle hdl)
+    {
+        DescriptorHeap* pHeap;
+        AsType(pHeap, hdl);
+        return pHeap;
+    }
+
+    inline DescriptorHeapHandle ToHandle(DescriptorHeap* pHeap)
+    {
+        DescriptorHeapHandle hdl;
+        AsHandle(pHeap, hdl);
         return hdl;
     }
 }

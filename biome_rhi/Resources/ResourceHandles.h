@@ -20,21 +20,33 @@ namespace biome
             BasicHandle(uintptr_t hdl) : m_handle(hdl) {};
         };
 
+        inline bool operator==(uintptr_t value, const BasicHandle& hdl)
+        {
+            return value == hdl.m_handle;
+        }
+
+        inline bool operator!=(uintptr_t value, const BasicHandle& hdl)
+        {
+            return value != hdl.m_handle;
+        }
+
+        inline bool operator==(const BasicHandle& hdl, uintptr_t value)
+        {
+            return hdl.m_handle == value;
+        }
+
+        inline bool operator!=(const BasicHandle& hdl, uintptr_t value)
+        {
+            return hdl.m_handle != value;
+        }
+
         static_assert(sizeof(BasicHandle) == sizeof(uintptr_t));
 
         #define DefineHandle(name) \
             struct name : BasicHandle { name() = default; name(uintptr_t hdl) : BasicHandle(hdl){} }
 
-        typedef uintptr_t TextureHandle;
-        typedef uintptr_t BufferHandle;
-
-        typedef Handle DescriptorHeapHandle;
-        typedef Handle RenderPassHandle;
-
-        typedef uintptr_t WindowHandle;
-        typedef uintptr_t AppHandle;
-        typedef uintptr_t LibraryHandle;
-
+        DefineHandle(TextureHandle);
+        DefineHandle(BufferHandle);
         DefineHandle(GpuDeviceHandle);
         DefineHandle(CommandQueueHandle);
         DefineHandle(CommandBufferHandle);
@@ -43,6 +55,11 @@ namespace biome
         DefineHandle(ShaderResourceLayoutHandle);
         DefineHandle(GfxPipelineHandle);
         DefineHandle(ComputePipelineHandle);
+        DefineHandle(DescriptorHeapHandle);
+
+        typedef uintptr_t WindowHandle;
+        typedef uintptr_t AppHandle;
+        typedef uintptr_t LibraryHandle;
 
         typedef biome::data::StaticArray<uint8_t> ShaderHandle;
     }

@@ -3,6 +3,7 @@
 #include "biome_rhi/Systems/CommandSystem.h"
 #include "biome_rhi/Resources/Resources.h"
 #include "biome_rhi/Systems/SystemEnums.h"
+#include "biome_rhi/Systems/SystemUtils.h"
 #include "biome_rhi/Descriptors/Viewport.h"
 #include "biome_rhi/Descriptors/Rectangle.h"
 #include "biome_core/Core/Globals.h"
@@ -13,30 +14,6 @@ using namespace biome::rhi::resources;
 
 namespace
 {
-    static D3D12_RESOURCE_STATES ToNativeResourceState(commands::ResourceState rscState)
-    {
-        #define AppendResourceState(biomeName, nativeName) \
-            nativeState = core::CombineFlags(nativeState, core::HasFlag(rscState, biomeName) ? nativeName : D3D12_RESOURCE_STATE_COMMON)
-
-        D3D12_RESOURCE_STATES nativeState = D3D12_RESOURCE_STATE_COMMON;
-
-        AppendResourceState(commands::ResourceState::VertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        AppendResourceState(commands::ResourceState::ConstantBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        AppendResourceState(commands::ResourceState::IndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-        AppendResourceState(commands::ResourceState::RenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        AppendResourceState(commands::ResourceState::UnorderedAccess, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        AppendResourceState(commands::ResourceState::DepthWrite, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-        AppendResourceState(commands::ResourceState::DepthRead, D3D12_RESOURCE_STATE_DEPTH_READ);
-        AppendResourceState(commands::ResourceState::GeometryShaderResource, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        AppendResourceState(commands::ResourceState::FragmentShaderResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        AppendResourceState(commands::ResourceState::IndirectArgument, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-        AppendResourceState(commands::ResourceState::CopyDestination, D3D12_RESOURCE_STATE_COPY_DEST);
-        AppendResourceState(commands::ResourceState::CopySource, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        AppendResourceState(commands::ResourceState::Present, D3D12_RESOURCE_STATE_PRESENT);
-
-        return nativeState;
-    }
-
     static D3D12_PRIMITIVE_TOPOLOGY ToNativePrimitiveTopology(PrimitiveTopology topology)
     {
         switch (topology)
@@ -46,6 +23,30 @@ namespace
         default:
             return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
         }
+    }
+
+    static D3D12_RESOURCE_STATES ToNativeResourceState(ResourceState rscState)
+    {
+        #define AppendResourceState(biomeName, nativeName) \
+            nativeState = core::CombineFlags(nativeState, core::HasFlag(rscState, biomeName) ? nativeName : D3D12_RESOURCE_STATE_COMMON)
+
+        D3D12_RESOURCE_STATES nativeState = D3D12_RESOURCE_STATE_COMMON;
+
+        AppendResourceState(ResourceState::VertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        AppendResourceState(ResourceState::ConstantBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        AppendResourceState(ResourceState::IndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        AppendResourceState(ResourceState::RenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        AppendResourceState(ResourceState::UnorderedAccess, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        AppendResourceState(ResourceState::DepthWrite, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        AppendResourceState(ResourceState::DepthRead, D3D12_RESOURCE_STATE_DEPTH_READ);
+        AppendResourceState(ResourceState::GeometryShaderResource, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        AppendResourceState(ResourceState::FragmentShaderResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        AppendResourceState(ResourceState::IndirectArgument, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+        AppendResourceState(ResourceState::CopyDestination, D3D12_RESOURCE_STATE_COPY_DEST);
+        AppendResourceState(ResourceState::CopySource, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        AppendResourceState(ResourceState::Present, D3D12_RESOURCE_STATE_PRESENT);
+
+        return nativeState;
     }
 }
 
@@ -118,22 +119,6 @@ void commands::DispatchCompute(CommandBufferHandle cmdBufferHdl, uint32_t x, uin
 {
 
 }
-
-/*
-
-virtual void STDMETHODCALLTYPE DrawInstanced(
-            _In_  UINT VertexCountPerInstance,
-            _In_  UINT InstanceCount,
-            _In_  UINT StartVertexLocation,
-            _In_  UINT StartInstanceLocation) = 0;
-
-        virtual void STDMETHODCALLTYPE DrawIndexedInstanced(
-            _In_  UINT IndexCountPerInstance,
-            _In_  UINT InstanceCount,
-            _In_  UINT StartIndexLocation,
-            _In_  INT BaseVertexLocation,
-            _In_  UINT StartInstanceLocation) = 0;
-*/
 
 void commands::DrawInstanced(
     CommandBufferHandle cmdBufferHdl,
