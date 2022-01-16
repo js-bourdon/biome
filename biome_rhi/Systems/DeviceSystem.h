@@ -16,6 +16,7 @@ using namespace biome::rhi::descriptors;
 namespace biome::rhi
 {
     enum class CommandType;
+    enum class BufferType;
 
     namespace device
     {
@@ -43,6 +44,8 @@ namespace biome::rhi
         GfxPipelineHandle           CreateGraphicsPipeline(GpuDeviceHandle deviceHdl, const GfxPipelineDesc& desc);
         ComputePipelineHandle       CreateComputePipeline(GpuDeviceHandle deviceHdl, const ComputePipelineDesc& desc);
         DescriptorHeapHandle        CreateDescriptorHeap(GpuDeviceHandle deviceHdl);
+
+        BufferHandle                CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t bufferByteSize);
 
         void                        DestroyDevice(GpuDeviceHandle hdl);
         void                        DestroyCommandQueue(CommandQueueHandle hdl);

@@ -17,4 +17,13 @@ namespace biome::rhi
         Copy,
         Count
     };
+
+    enum class BufferType
+    {
+        Unknown = -1,
+        Vertex,
+        Index,
+        Constant,
+        Count
+    };
 }

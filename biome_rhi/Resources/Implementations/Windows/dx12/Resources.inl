@@ -1,5 +1,7 @@
 #pragma once
 
+#include "biome_core/DataStructures/StaticArray.h"
+
 namespace biome::rhi
 {
     namespace resources
@@ -36,5 +38,70 @@ namespace biome::rhi
             ComPtr<ID3D12Resource>      m_pResource { nullptr };
             D3D12_CPU_DESCRIPTOR_HANDLE m_rtvHandle {};
         };
+
+        struct Buffer
+        {
+            ComPtr<ID3D12Resource>      m_pResource { nullptr };
+            D3D12_CPU_DESCRIPTOR_HANDLE m_srv {};
+            D3D12_CPU_DESCRIPTOR_HANDLE m_uav {};
+            size_t                      m_byteSize { 0 };
+        };
+    }
+
+    using namespace biome::rhi::resources;
+
+    template<typename PtrType, typename HandleType>
+    inline void AsType(PtrType& pPtr, HandleType handle)
+    {
+        pPtr = reinterpret_cast<PtrType>(*reinterpret_cast<uintptr_t*>(&handle));
+    }
+
+    template<typename PtrType, typename HandleType>
+    inline void AsHandle(const PtrType pPtr, HandleType& handle)
+    {
+        uintptr_t* pHdl = reinterpret_cast<uintptr_t*>(&handle);
+        *pHdl = reinterpret_cast<uintptr_t>(pPtr);
+    }
+
+    inline GpuDevice* ToType(GpuDeviceHandle hdl)
+    {
+        GpuDevice* pDevice;
+        AsType(pDevice, hdl);
+        return pDevice;
+    }
+
+    inline GpuDeviceHandle ToHandle(GpuDevice* pDevice)
+    {
+        GpuDeviceHandle hdl;
+        AsHandle(pDevice, hdl);
+        return hdl;
+    }
+
+    inline CommandBuffer* ToType(CommandBufferHandle hdl)
+    {
+        CommandBuffer* pCmdBuffer;
+        AsType(pCmdBuffer, hdl);
+        return pCmdBuffer;
+    }
+
+    inline CommandBufferHandle ToHandle(CommandBuffer* pCmdBuffer)
+    {
+        CommandBufferHandle hdl;
+        AsHandle(pCmdBuffer, hdl);
+        return hdl;
+    }
+
+    inline Buffer* ToType(BufferHandle hdl)
+    {
+        Buffer* pBuffer;
+        AsType(pBuffer, hdl);
+        return pBuffer;
+    }
+
+    inline BufferHandle ToHandle(Buffer* pBuffer)
+    {
+        BufferHandle hdl;
+        AsHandle(pBuffer, hdl);
+        return hdl;
     }
 }

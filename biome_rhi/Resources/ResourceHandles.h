@@ -12,17 +12,18 @@ namespace biome
 {
     namespace rhi
     {
-        template<typename PtrType, typename HandleType>
-        inline void AsType(PtrType& pPtr, HandleType handle)
+        struct alignas(sizeof(uintptr_t)) BasicHandle
         {
-            pPtr = reinterpret_cast<PtrType>(handle);
-        }
+            uintptr_t m_handle { Handle_NULL };
 
-        template<typename PtrType, typename HandleType>
-        inline void AsHandle(const PtrType pPtr, HandleType& handle)
-        {
-            handle = reinterpret_cast<HandleType>(pPtr);
-        }
+            BasicHandle() = default;
+            BasicHandle(uintptr_t hdl) : m_handle(hdl) {};
+        };
+
+        static_assert(sizeof(BasicHandle) == sizeof(uintptr_t));
+
+        #define DefineHandle(name) \
+            struct name : BasicHandle { name() = default; name(uintptr_t hdl) : BasicHandle(hdl){} }
 
         typedef uintptr_t TextureHandle;
         typedef uintptr_t BufferHandle;
@@ -34,14 +35,14 @@ namespace biome
         typedef uintptr_t AppHandle;
         typedef uintptr_t LibraryHandle;
 
-        typedef uintptr_t GpuDeviceHandle;
-        typedef uintptr_t CommandQueueHandle;
-        typedef uintptr_t CommandBufferHandle;
-        typedef uintptr_t FenceHandle;
-        typedef uintptr_t SwapChainHandle;
-        typedef uintptr_t ShaderResourceLayoutHandle;
-        typedef uintptr_t GfxPipelineHandle;
-        typedef uintptr_t ComputePipelineHandle;
+        DefineHandle(GpuDeviceHandle);
+        DefineHandle(CommandQueueHandle);
+        DefineHandle(CommandBufferHandle);
+        DefineHandle(FenceHandle);
+        DefineHandle(SwapChainHandle);
+        DefineHandle(ShaderResourceLayoutHandle);
+        DefineHandle(GfxPipelineHandle);
+        DefineHandle(ComputePipelineHandle);
 
         typedef biome::data::StaticArray<uint8_t> ShaderHandle;
     }

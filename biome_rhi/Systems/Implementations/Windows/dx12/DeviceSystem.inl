@@ -954,6 +954,17 @@ DescriptorHeapHandle device::CreateDescriptorHeap(GpuDeviceHandle /*deviceHdl*/)
     return Handle_NULL;
 }
 
+BufferHandle CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t bufferByteSize)
+{
+    GpuDevice* pDevice = ToType(deviceHdl);
+
+    // TODO: Use placed resources
+    D3D12_HEAP_PROPERTIES heapProps {};
+    //heapProps.
+
+    pDevice->m_pDevice->CreateCommittedResource(&heapProps, )
+}
+
 void device::DestroyDevice(GpuDeviceHandle hdl)
 {
     GpuDevice* pDevice;
