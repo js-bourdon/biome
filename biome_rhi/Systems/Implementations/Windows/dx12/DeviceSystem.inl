@@ -955,7 +955,7 @@ DescriptorHeapHandle device::CreateDescriptorHeap(GpuDeviceHandle /*deviceHdl*/)
     return Handle_NULL;
 }
 
-BufferHandle CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t bufferByteSize)
+BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t bufferByteSize)
 {
     BufferHandle bufferHdl = Handle_NULL;
     GpuDevice* pDevice = ToType(deviceHdl);
@@ -982,6 +982,8 @@ BufferHandle CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t buf
         case BufferType::Vertex:
         case BufferType::Constant:
             return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+        case BufferType::Index:
+            return D3D12_RESOURCE_STATE_INDEX_BUFFER;
         default:
             BIOME_FAIL_MSG("Unsupported BufferType");
             return D3D12_RESOURCE_STATE_COMMON;
@@ -1008,26 +1010,6 @@ BufferHandle CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t buf
     if (FAILED(hr))
     {
         return bufferHdl;
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-        heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
-        heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
-
-        hr = pDevice->m_pDevice->CreateCommittedResource(
-            &heapProps,
-            D3D12_HEAP_FLAG_NONE,
-            &rscDesc,
-            nativeRscState,
-            nullptr,
-            IID_PPV_ARGS(spBuffer->m_pStaging.ReleaseAndGetAddressOf()));
-
-        if (FAILED(hr))
-        {
-            return bufferHdl;
-        }
     }
 
     Buffer* pBuffer = spBuffer.release();

@@ -42,7 +42,6 @@ namespace biome::rhi
         struct Buffer
         {
             ComPtr<ID3D12Resource>      m_pResource { nullptr };
-            ComPtr<ID3D12Resource>      m_pStaging { nullptr };
             D3D12_CPU_DESCRIPTOR_HANDLE m_srv {};
             D3D12_CPU_DESCRIPTOR_HANDLE m_uav {};
             size_t                      m_byteSize { 0 };
