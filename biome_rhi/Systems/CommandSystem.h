@@ -76,8 +76,5 @@ namespace biome::rhi
         };
 
         void ResourceTransition(CommandBufferHandle cmdBufferHdl, const TextureStateTransition* transitions, uint32_t transitionCount);
-
-        uint8_t* MapBuffer(BufferHandle hdl);
-        void UnmapBuffer(BufferHandle hdl);
     }
 }

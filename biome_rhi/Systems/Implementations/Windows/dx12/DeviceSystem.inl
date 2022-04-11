@@ -1016,6 +1016,20 @@ BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, si
     return ToHandle(pBuffer);
 }
 
+uint8_t* device::MapBuffer(BufferHandle hdl)
+{
+    uint8_t* pMappedData = nullptr;
+    Buffer* pBuffer = ToType(hdl);
+    //pBuffer->m_pResource->Map(0, )
+
+    return pMappedData;
+}
+
+void device::UnmapBuffer(BufferHandle hdl)
+{
+    Buffer* pBuffer = ToType(hdl);
+}
+
 void device::DestroyDevice(GpuDeviceHandle hdl)
 {
     GpuDevice* pDevice;

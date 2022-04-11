@@ -47,6 +47,9 @@ namespace biome::rhi
 
         BufferHandle                CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t bufferByteSize);
 
+        uint8_t*                    MapBuffer(BufferHandle hdl);
+        void                        UnmapBuffer(BufferHandle hdl);
+
         void                        DestroyDevice(GpuDeviceHandle hdl);
         void                        DestroyCommandQueue(CommandQueueHandle hdl);
         void                        DestroyCommandBuffer(CommandBufferHandle cmdBufferHdl);

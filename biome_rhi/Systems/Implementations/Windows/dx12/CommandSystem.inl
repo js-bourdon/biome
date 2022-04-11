@@ -292,17 +292,3 @@ void commands::ResourceTransition(CommandBufferHandle cmdBufferHdl, const Textur
     
     pCmdBuffer->m_pCmdList->ResourceBarrier(transitionCount, pBarriers);
 }
-
-uint8_t* commands::MapBuffer(BufferHandle hdl)
-{
-    uint8_t* pMappedData = nullptr;
-    Buffer* pBuffer = ToType(hdl);
-    //pBuffer->m_pResource->Map(0, )
-
-    return pMappedData;
-}
-
-void commands::UnmapBuffer(BufferHandle hdl)
-{
-    Buffer* pBuffer = ToType(hdl);
-}

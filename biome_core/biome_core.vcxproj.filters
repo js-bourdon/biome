@@ -140,6 +140,9 @@
     <ClInclude Include="DataStructures\StaticArray.h">
       <Filter>src\DataStructures</Filter>
     </ClInclude>
+    <ClInclude Include="Memory\MemoryOffsetAllocator.h">
+      <Filter>src\Memory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructures\IndexFreeList.cpp">
@@ -183,6 +186,9 @@
     </ClCompile>
     <ClCompile Include="Libraries\LibraryLoader.cpp">
       <Filter>src\Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\MemoryOffsetAllocator.cpp">
+      <Filter>src\Memory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
