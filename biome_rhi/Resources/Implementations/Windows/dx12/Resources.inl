@@ -1,17 +1,28 @@
 #pragma once
 
 #include "biome_core/DataStructures/StaticArray.h"
+#include "biome_core/Memory/MemoryOffsetAllocator.h"
 
 namespace biome::rhi
 {
     namespace resources
     {
+        struct GpuDescriptorHeap
+        {
+            ComPtr<ID3D12DescriptorHeap>    m_pDescriptorHeap { nullptr };
+            MemoryOffsetAllocator           m_OffsetAllocator {};
+        };
+
         struct GpuDevice
         {
-			ComPtr<ID3D12Device>            m_pDevice { nullptr };
+            ComPtr<ID3D12Device>            m_pDevice { nullptr };
             ComPtr<ID3D12DescriptorHeap>    m_pRtvDescriptorHeap { nullptr };
             ComPtr<ID3D12Fence>             m_pFrameFence { nullptr };
-			uint64_t                        m_currentFrame { 0 };
+        #ifdef _DEBUG
+            ComPtr<IDXGIDebug>              m_pDebug { nullptr };
+        #endif
+            GpuDescriptorHeap               m_ResourceViewHeap {};
+            uint64_t                        m_currentFrame { 0 };
             HANDLE                          m_fenceEvent {};
             uint32_t                        m_rtvDescriptorSize { 0 };
             uint32_t                        m_framesOfLatency { 0 };
@@ -19,7 +30,7 @@ namespace biome::rhi
 
         struct SwapChain
         {
-			ComPtr<IDXGISwapChain1>                 m_pSwapChain { nullptr };
+            ComPtr<IDXGISwapChain1>                 m_pSwapChain { nullptr };
             biome::data::StaticArray<TextureHandle> m_backBuffers {};
             uint32_t                                m_pixelWidth { 0 };
             uint32_t                                m_pixelHeight { 0 };

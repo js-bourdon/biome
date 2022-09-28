@@ -6,82 +6,194 @@ using namespace biome::memory;
 
 bool MemoryOffsetAllocator::Initialize(size_t byteSize, size_t pageSize)
 {
-    const uint32_t pageCount = static_cast<uint32_t>(Align(byteSize, pageSize)) / pageSize;
-    const size_t metadataOverhead = (sizeof(uint32_t) + sizeof(FreeRange)) * pageCount;
+    const size_t pageCount = Align(byteSize, pageSize) / pageSize;
+    const size_t metadataOverhead = sizeof(Range) * pageCount * 2;
 
-    m_pFreeRanges = static_cast<FreeRange*>(VirtualMemoryAllocator::Allocate(metadataOverhead, metadataOverhead));
-    m_pPages = reinterpret_cast<uint32_t*>(m_pFreeRanges + pageCount);
+    m_pFreeRanges = static_cast<Range*>(VirtualMemoryAllocator::Allocate(metadataOverhead, metadataOverhead));
+    m_pUsedRanges = m_pFreeRanges + pageCount;
+
+    m_pFreeRanges->m_Offset = 0;
+    m_pFreeRanges->m_Count = pageCount;
+    m_FreeRangeCount = 1;
 
     m_SystemPageSize = pageSize;
     m_TotalPageCount = pageCount;
-    m_NextPageIndex = 0;
+
+    return true;
 }
 
 bool MemoryOffsetAllocator::IsInitialized()
 {
     return m_pFreeRanges != nullptr;
 }
-void MemoryOffsetAllocator::Shutdown()
+
+MemoryOffsetAllocator::~MemoryOffsetAllocator()
 {
-    VirtualMemoryAllocator::Release(m_pFreeRanges);
+    Shutdown();
 }
 
-void* MemoryOffsetAllocator::Allocate(size_t byteSize)
+void MemoryOffsetAllocator::Shutdown()
 {
-    const uint32_t requiredPageCount = static_cast<uint32_t>(Align(byteSize, m_SystemPageSize) / m_SystemPageSize);
-    const uint32_t newNextPageIndex = m_NextPageIndex + requiredPageCount;
-    BIOME_ASSERT_MSG(requiredPageCount <= m_TotalPageCount, "MemoryOffsetAllocator: Requested allocation exceeds allocator total byte size.");
-
-    if (newNextPageIndex < m_CommittedPageCount)
+    if (m_pFreeRanges != nullptr)
     {
-        m_pPages[m_NextPageIndex] = requiredPageCount;
-        pAllocation = PageIndexToAddress(m_NextPageIndex);
-        m_NextPageIndex = newNextPageIndex;
+        VirtualMemoryAllocator::Release(m_pFreeRanges);
     }
-    else
-    {
-        uint32_t freePagesStartIndex = SearchFreePages(requiredPageCount);
-        if (freePagesStartIndex != UINT32_MAX)
-        {
-            m_pPages[freePagesStartIndex] = requiredPageCount;
-            pAllocation = PageIndexToAddress(freePagesStartIndex);
-        }
-        else
-        {
-            uint32_t newRequiredCommitCount = newNextPageIndex - m_CommittedPageCount;
-            uint32_t remainingReservedPagesCount = m_TotalPageCount - m_CommittedPageCount;
-            if (newRequiredCommitCount <= remainingReservedPagesCount)
-            {
-                CommitMorePages(newRequiredCommitCount);
+}
 
-                m_pPages[m_NextPageIndex] = requiredPageCount;
-                pAllocation = PageIndexToAddress(m_NextPageIndex);
-                m_NextPageIndex = newNextPageIndex;
+size_t MemoryOffsetAllocator::Allocate(size_t byteSize)
+{
+    BIOME_ASSERT_MSG(m_FreeRangeCount > 0, "Memory exhausted");
+
+    const size_t requiredPageCount = Align(byteSize, m_SystemPageSize) / m_SystemPageSize;
+
+    for (size_t i = m_FreeRangeCount - 1; i >= 0; --i)
+    {
+        Range& range = m_pFreeRanges[i];
+        if (range.m_Count >= requiredPageCount)
+        {
+            Range usedRange { range.m_Offset - range.m_Count + requiredPageCount, requiredPageCount };
+            AddUsedRange(usedRange);
+
+            range.m_Count -= requiredPageCount;
+            if (range.m_Count == 0)
+            {
+                Range& lastRange = m_pFreeRanges[m_FreeRangeCount - 1];
+                range.m_Offset = lastRange.m_Offset;
+                range.m_Count = lastRange.m_Count;
+                lastRange.m_Offset = InvalidOffset;
+                --m_FreeRangeCount;
+            }
+
+            return usedRange.m_Offset;
+        }
+    }
+
+    BIOME_FAIL_MSG("Memory exhausted");
+    return InvalidOffset;
+}
+
+bool MemoryOffsetAllocator::Release(size_t byteOffset)
+{
+    for (size_t i = 0; i < m_UsedRangeCount; ++i)
+    {
+        Range& range = m_pUsedRanges[i];
+        if (range.m_Offset == byteOffset)
+        {
+            AddFreeRange(range);
+
+            --m_UsedRangeCount;
+            if (m_UsedRangeCount > 0)
+            {
+                Range& lastRange = m_pUsedRanges[m_UsedRangeCount];
+
+                range.m_Offset = lastRange.m_Offset;
+                range.m_Count = lastRange.m_Count;
+
+                lastRange.m_Offset = InvalidOffset;
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void MemoryOffsetAllocator::AddFreeRange(const Range& range)
+{
+    BIOME_ASSERT(m_FreeRangeCount < m_TotalPageCount);
+    AddRange(range, m_pFreeRanges, m_FreeRangeCount);
+}
+
+void MemoryOffsetAllocator::AddUsedRange(const Range& range)
+{
+    BIOME_ASSERT(m_UsedRangeCount < m_TotalPageCount);
+
+    Range& newRange = m_pUsedRanges[m_UsedRangeCount];
+    newRange.m_Offset = range.m_Offset;
+    newRange.m_Count = range.m_Count;
+    ++m_UsedRangeCount;
+
+
+    AddRange(range, m_pUsedRanges, m_UsedRangeCount);
+}
+
+void MemoryOffsetAllocator::AddRange(const Range& range, Range* pRanges, size_t& rangeCount)
+{
+    bool merged = false;
+
+    for (size_t i = rangeCount - 1; i >= 0; --i)
+    {
+        if (Merge(pRanges[i], range, pRanges[i]))
+        {
+            merged = true;
+            break;
+        }
+    }
+
+    if (!merged)
+    {
+        Range& newRange = pRanges[rangeCount];
+        newRange.m_Offset = range.m_Offset;
+        newRange.m_Count = range.m_Count;
+        ++rangeCount;
+    }
+
+    for (size_t i = rangeCount - 1; i > 0; --i)
+    {
+        for (size_t j = i - 1; j >= 0; --j)
+        {
+            if (Merge(pRanges[i], pRanges[j], pRanges[j]))
+            {
+                --rangeCount;
+                break;
             }
         }
     }
-
-    BIOME_ASSERT_MSG(pAllocation, "ThreadHeapAllocator: Out of Memory");
-
-    return pAllocation;
 }
 
-bool MemoryOffsetAllocator::Release(void* pMemory)
+bool MemoryOffsetAllocator::AreOverlapping(const Range& range0, const Range& range1)
 {
+    const size_t rangeEnd0 = range0.m_Offset + range0.m_Count;
+    const size_t rangeEnd1 = range1.m_Offset + range1.m_Count;
 
+    return
+        rangeEnd0 > range1.m_Offset ||
+        rangeEnd1 > range0.m_Offset;
 }
 
-size_t MemoryOffsetAllocator::AllocationSize(void* pMemory)
+bool MemoryOffsetAllocator::CanMerge(const Range& range0, const Range& range1)
 {
+    BIOME_ASSERT(!AreOverlapping(range0, range1));
 
+    const size_t rangeEnd0 = range0.m_Offset + range0.m_Count;
+    const size_t rangeEnd1 = range1.m_Offset + range1.m_Count;
+
+    return 
+        rangeEnd0 == range1.m_Offset || 
+        rangeEnd1 == range0.m_Offset;
 }
 
-void MemoryOffsetAllocator::Defrag()
+bool MemoryOffsetAllocator::Merge(const Range& range0, const Range& range1, Range& newRange)
 {
-	// TODO
-}
+    if (CanMerge(range0, range1))
+    {
+        const size_t rangeEnd0 = range0.m_Offset + range0.m_Count;
+        const size_t rangeEnd1 = range1.m_Offset + range1.m_Count;
 
-bool CanMerge(const FreeRange& range0, const FreeRange& range1)
-{
+        newRange.m_Count = range0.m_Count + range1.m_Count;
 
+        if (rangeEnd0 == range1.m_Offset)
+        {
+            newRange.m_Offset = range0.m_Offset;
+        }
+        else
+        {
+            newRange.m_Offset = range1.m_Offset;
+        }
+
+        return true;
+    }
+
+    return false;
 }

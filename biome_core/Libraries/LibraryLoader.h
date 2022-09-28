@@ -2,7 +2,7 @@
 
 #include "biome_rhi/Resources/ResourceHandles.h"
 
-using namespace biome::rhi;
+//using namespace biome::rhi;
 
 namespace biome
 {
@@ -17,10 +17,13 @@ namespace biome
             static LibraryHandle    Load(const wchar_t* pName);
             static void             Unload(LibraryHandle handle);
 
-        private:
-
             template<typename T>
-            inline static void LoadFunction(LibraryHandle libraryHdl, const char *pFnctName, T &fnctPtr);
+            inline static void LoadFunction(LibraryHandle libraryHdl, const char* pFnctName, T& fnctPtr)
+            {
+                fnctPtr = reinterpret_cast<T>(GetFunctionAddress(libraryHdl, pFnctName));
+            }
+
+        private:
 
             // Platform-dependent implementations required.
             // Look into `Library/Implementations/<platform>.inl`

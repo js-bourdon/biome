@@ -69,6 +69,8 @@ void* VirtualMemoryAllocator::Allocate(size_t byteSize, size_t commitByteSize, s
 
 void VirtualMemoryAllocator::Release(void *pMemory)
 {
+    BIOME_ASSERT(pMemory != nullptr);
+
     std::unique_lock<std::mutex> lock(s_Allocator.m_Mutex);
     
     VMHeader *pHeader = (reinterpret_cast<VMHeader*>(pMemory) - 1);

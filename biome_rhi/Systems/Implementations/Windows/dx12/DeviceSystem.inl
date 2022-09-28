@@ -9,10 +9,12 @@
 #include "biome_core/DataStructures/Vector.h"
 #include "biome_core/Memory/StackAllocator.h"
 #include "biome_core/FileSystem/FileSystem.h"
+#include "biome_core/Libraries/LibraryLoader.h"
 
 using namespace biome;
 using namespace biome::rhi;
 using namespace biome::rhi::resources;
+using namespace biome::external;
 
 namespace 
 {
@@ -499,6 +501,7 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
 {
     GpuDeviceHandle deviceHdl = Handle_NULL;
     UINT dxgiFactoryFlags = 0;
+    ComPtr<IDXGIDebug> pDxgiDebug {};
 
 #if defined(_DEBUG)
     // Enable the debug layer (requires the Graphics Tools "optional feature").
@@ -513,6 +516,22 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
             dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
         }
     }
+
+    {
+        LibraryHandle libraryHdl = LibraryLoader::Load(L"dxgidebug.dll");
+        if (libraryHdl)
+        {
+            typedef HRESULT(WINAPI* LPDXGIGETDEBUGINTERFACE)(REFIID, void**);
+            LPDXGIGETDEBUGINTERFACE DXGIGetDebugInterface;
+
+            LibraryLoader::LoadFunction(libraryHdl, "DXGIGetDebugInterface", DXGIGetDebugInterface);
+
+            if (DXGIGetDebugInterface)
+            {
+                BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(DXGIGetDebugInterface(IID_PPV_ARGS(pDxgiDebug.ReleaseAndGetAddressOf()))));
+            }
+        }
+    }
 #endif
 
     ComPtr<IDXGIFactory4> factory;
@@ -523,7 +542,9 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
         {
             ComPtr<ID3D12Device> pDevice {};
             ComPtr<ID3D12DescriptorHeap> pRtvDescriptorHeap {};
+            ComPtr<ID3D12DescriptorHeap> pViewDescriptorHeap {};
             ComPtr<ID3D12Fence> pFrameFence {};
+            ComPtr<IDXGIDebug> pDebug {};
 
             if (SUCCEEDED(D3D12CreateDevice(
                 hardwareAdapter.Get(),
@@ -537,23 +558,37 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
 
                 if (SUCCEEDED(pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(pRtvDescriptorHeap.ReleaseAndGetAddressOf()))))
                 {
-                    if (SUCCEEDED(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(pFrameFence.ReleaseAndGetAddressOf()))))
+                    static constexpr uint32_t ViewDescCount = 1024;
+
+                    D3D12_DESCRIPTOR_HEAP_DESC viewHeapDesc = {};
+                    viewHeapDesc.NumDescriptors = ViewDescCount;
+                    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+                    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+                    if (SUCCEEDED(pDevice->CreateDescriptorHeap(&viewHeapDesc, IID_PPV_ARGS(pViewDescriptorHeap.ReleaseAndGetAddressOf()))))
                     {
-                        const HANDLE fenceEvent = CreateEvent(
-                            nullptr,    // Security attributes
-                            FALSE,      // Manual reset
-                            FALSE,      // Initial state
-                            L"FrameFenceEvent");
+                        if (SUCCEEDED(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(pFrameFence.ReleaseAndGetAddressOf()))))
+                        {
+                            const HANDLE fenceEvent = CreateEvent(
+                                nullptr,    // Security attributes
+                                FALSE,      // Manual reset
+                                FALSE,      // Initial state
+                                L"FrameFenceEvent");
 
-                        GpuDevice* pGpuDevice = new GpuDevice();
-                        pGpuDevice->m_pDevice = pDevice;
-                        pGpuDevice->m_pRtvDescriptorHeap = pRtvDescriptorHeap;
-                        pGpuDevice->m_pFrameFence = pFrameFence;
-                        pGpuDevice->m_fenceEvent = fenceEvent;
-                        pGpuDevice->m_framesOfLatency = framesOfLatency;
-                        pGpuDevice->m_rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+                            GpuDevice* pGpuDevice = new GpuDevice();
+                            pGpuDevice->m_pDevice = pDevice;
+                            pGpuDevice->m_pRtvDescriptorHeap = pRtvDescriptorHeap;
+                            pGpuDevice->m_pFrameFence = pFrameFence;
+                            pGpuDevice->m_fenceEvent = fenceEvent;
+                            pGpuDevice->m_framesOfLatency = framesOfLatency;
+                            pGpuDevice->m_rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-                        AsHandle(pGpuDevice, deviceHdl);
+                        #ifdef _DEBUG
+                            pGpuDevice->m_pDebug = pDxgiDebug;
+                        #endif
+
+                            AsHandle(pGpuDevice, deviceHdl);
+                        }
                     }
                 }
             }
@@ -1035,7 +1070,19 @@ void device::DestroyDevice(GpuDeviceHandle hdl)
     GpuDevice* pDevice;
     AsType(pDevice, hdl);
     CloseHandle(pDevice->m_fenceEvent);
+
+#ifdef _DEBUG
+    ComPtr<IDXGIDebug> pDebug = pDevice->m_pDebug;
+#endif
+
     delete pDevice;
+
+#ifdef _DEBUG
+    if (pDebug)
+    {
+        pDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+    }
+#endif
 }
 
 void device::DestroyCommandQueue(CommandQueueHandle hdl)

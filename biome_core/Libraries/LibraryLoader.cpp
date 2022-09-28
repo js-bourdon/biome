@@ -18,10 +18,4 @@ void LibraryLoader::Unload(LibraryHandle handle)
     UnloadDynamicLibrary(handle);
 }
 
-template<typename T>
-void LibraryLoader::LoadFunction(LibraryHandle libraryHdl, const char *pFnctName, T &fnctPtr)
-{
-    fnctPtr = reinterpret_cast<T>(GetFunctionAddress(libraryHdl, pFnctName));
-}
-
 #include INCLUDE_IMPLEMENTATION(LibraryLoader)

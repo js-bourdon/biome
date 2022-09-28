@@ -12,6 +12,8 @@ namespace biome
         {
         public:
 
+            static constexpr size_t InvalidOffset = std::numeric_limits<size_t>::max();
+
             MemoryOffsetAllocator() = default;
             MemoryOffsetAllocator(const MemoryOffsetAllocator&) = delete;
             MemoryOffsetAllocator(MemoryOffsetAllocator&&) = delete;
@@ -24,27 +26,32 @@ namespace biome
             [[nodiscard]]
             bool        IsInitialized();
             void        Shutdown();
-            void*       Allocate(size_t byteSize);
-            bool        Release(void* pMemory);
-            size_t      AllocationSize(void* pMemory);
-            void        Defrag();
+            size_t      Allocate(size_t byteSize);
+            bool        Release(size_t byteOffset);
 
         private:
 
-            struct FreeRange
+            struct Range
             {
-                uint32_t m_Index;
-                uint32_t m_Count;
+                size_t m_Offset;
+                size_t m_Count;
             };
 
-            static bool CanMerge(const FreeRange& range0, const FreeRange& range1);
+            void AddFreeRange(const Range& range);
+            void AddUsedRange(const Range& range);
 
-            FreeRange*  m_pFreeRanges { nullptr };
-            uint32_t*   m_pPages { nullptr };
+            static bool AreOverlapping(const Range& range0, const Range& range1);
+            static bool CanMerge(const Range& range0, const Range& range1);
+            static bool Merge(const Range& range0, const Range& range1, Range& newRange);
+            static void AddRange(const Range& range, Range* pRanges, size_t& rangeCount);
+            static bool FindRange(size_t offset, Range* pRanges, size_t& rangeCount);
+
+            Range*      m_pFreeRanges { nullptr };
+            Range*      m_pUsedRanges { nullptr };
             size_t      m_SystemPageSize { 0 };
-            uint32_t    m_TotalPageCount { 0 };
-            uint32_t    m_NextPageIndex { 0 };
-            uint32_t    m_FreeRangesCount { 0 };
+            size_t      m_TotalPageCount { 0 };
+            size_t      m_FreeRangeCount { 0 };
+            size_t      m_UsedRangeCount { 0 };
         };
     }
 }
