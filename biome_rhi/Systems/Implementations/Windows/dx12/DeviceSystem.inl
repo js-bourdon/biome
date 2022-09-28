@@ -1047,6 +1047,8 @@ BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, si
         return bufferHdl;
     }
 
+    spBuffer->m_byteSize = bufferByteSize;
+
     Buffer* pBuffer = spBuffer.release();
     return ToHandle(pBuffer);
 }

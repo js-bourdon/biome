@@ -7,7 +7,7 @@ namespace biome::rhi
 {
     namespace resources
     {
-        struct GpuDescriptorHeap
+        struct DescriptorHeap
         {
             ComPtr<ID3D12DescriptorHeap>    m_pDescriptorHeap { nullptr };
             MemoryOffsetAllocator           m_OffsetAllocator {};
@@ -21,7 +21,7 @@ namespace biome::rhi
         #ifdef _DEBUG
             ComPtr<IDXGIDebug>              m_pDebug { nullptr };
         #endif
-            GpuDescriptorHeap               m_ResourceViewHeap {};
+            DescriptorHeap                  m_ResourceViewHeap {};
             uint64_t                        m_currentFrame { 0 };
             HANDLE                          m_fenceEvent {};
             uint32_t                        m_rtvDescriptorSize { 0 };
@@ -44,23 +44,21 @@ namespace biome::rhi
             ComPtr<ID3D12GraphicsCommandList>   m_pCmdList { nullptr };
         };
 
-        struct Texture
+        struct Resource
         {
-            ComPtr<ID3D12Resource>      m_pResource { nullptr };
+            ComPtr<ID3D12Resource>  m_pResource { nullptr };
+            uint32_t                m_srv { 0 };
+            uint32_t                m_uav { 0 };
+        };
+
+        struct Texture : public Resource
+        {
             D3D12_CPU_DESCRIPTOR_HANDLE m_rtvHandle {};
         };
 
-        struct Buffer
+        struct Buffer : public Resource
         {
-            ComPtr<ID3D12Resource>      m_pResource { nullptr };
-            D3D12_CPU_DESCRIPTOR_HANDLE m_srv {};
-            D3D12_CPU_DESCRIPTOR_HANDLE m_uav {};
             size_t                      m_byteSize { 0 };
-        };
-
-        struct DescriptorHeap
-        {
-
         };
     }
 
