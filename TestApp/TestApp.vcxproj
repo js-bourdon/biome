@@ -277,6 +277,9 @@
     <ProjectReference Include="..\biome_core\biome_core.vcxproj">
       <Project>{47ba147b-3811-44d8-acf8-c8cf87880980}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\biome_render\biome_render.vcxproj">
+      <Project>{66d2d9ce-4bd2-4451-a4de-c9aa7ebad592}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\biome_rhi\biome_rhi.vcxproj">
       <Project>{3b1b2795-580e-457d-a8a4-68ef45a32b9f}</Project>
     </ProjectReference>

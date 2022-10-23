@@ -56,8 +56,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     worker0.Run(1000);
     worker1.Run(100);
 
-    int value0 = worker0.Wait();
-    int value1 = worker1.Wait();
+    const int value0 = worker0.Wait();
+    const int value1 = worker1.Wait();
 
     constexpr uint32_t windowWidth = 1980;
     constexpr uint32_t windowHeight = 1080;
@@ -73,6 +73,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     AssetDatabase* pAssetDb = LoadDatabase("Media/builds/star_trek_danube_class/StartTrek.db");
     const Texture* pTextures = GetTextures(pAssetDb);
     const Mesh* pMeshes = GetMeshes(pAssetDb);
+    BIOME_ASSERT(pAssetDb->m_header.m_meshCount > 0);
+
+
+
     DestroyDatabase(pAssetDb);
 
     constexpr uint32_t backBufferCount = 2;
