@@ -10,4 +10,12 @@
 // add headers that you want to pre-compile here
 #include "framework.h"
 
+#include <vector>
+
+#include "biome_core/Math/Math.h"
+#include "biome_core/DataStructures/Vector.h"
+#include "biome_rhi/Resources/ResourceHandles.h"
+#include "biome_rhi/Descriptors/Rectangle.h"
+#include "biome_rhi/Descriptors/Viewport.h"
+
 #endif //PCH_H

@@ -22,10 +22,16 @@
     <ClInclude Include="Renderer.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>pch</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
