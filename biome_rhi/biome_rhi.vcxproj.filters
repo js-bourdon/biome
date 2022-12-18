@@ -24,41 +24,11 @@
     <Filter Include="src\WindowFactory">
       <UniqueIdentifier>{80714b16-7857-4f0d-b8fd-cc6aa848450d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\Events\Implementations">
-      <UniqueIdentifier>{c708cb94-8d9d-4ec6-a958-144dc71eefbf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Events\Implementations\Windows">
-      <UniqueIdentifier>{1fde7585-8c4d-4727-ac75-edf4901bd1fb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\WindowFactory\Implementations">
-      <UniqueIdentifier>{b9175eef-e8f4-47ae-90e7-c7de27eda094}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\WindowFactory\Implementations\Windows">
-      <UniqueIdentifier>{60ded7f9-9337-4b8d-93f9-23fb36e409ad}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\Systems">
       <UniqueIdentifier>{860984dc-b20c-476a-b1f2-944e56a98249}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\Systems\Implementations">
-      <UniqueIdentifier>{ad8a9d37-0051-4d45-a885-fbb4a31ec6f8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Systems\Implementations\Windows">
-      <UniqueIdentifier>{ad7e0e13-496e-4e16-b8fd-f585bb5479a9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Systems\Implementations\Windows\dx12">
-      <UniqueIdentifier>{d323e2df-3348-4b03-bb77-6c04bbd7ada6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Dependencies">
       <UniqueIdentifier>{dce0bc3a-ba97-469e-94bb-3bbd8512d053}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Resources\Implementations">
-      <UniqueIdentifier>{99a4fffe-2e67-454f-9711-bcdab9aa61e9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Resources\Implementations\Windows">
-      <UniqueIdentifier>{278e64a6-c099-4fc5-8385-b978a3634295}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Resources\Implementations\Windows\dx12">
-      <UniqueIdentifier>{173af24b-0af9-4dca-9247-3abe3b36ce60}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -146,9 +116,6 @@
     <ClInclude Include="Resources\Resources.h">
       <Filter>src\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="Systems\Implementations\Windows\dx12\CommandSystem.inl">
-      <Filter>src\Systems\Implementations\Windows\dx12</Filter>
-    </ClInclude>
     <ClInclude Include="Systems\SystemUtils.h">
       <Filter>src\Systems</Filter>
     </ClInclude>
@@ -171,21 +138,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Events\Implementations\Windows\MessagePump.inl">
-      <Filter>src\Events\Implementations\Windows</Filter>
-    </None>
-    <None Include="WindowFactory\Implementations\Windows\WindowFactory.inl">
-      <Filter>src\WindowFactory\Implementations\Windows</Filter>
-    </None>
-    <None Include="Systems\Implementations\Windows\dx12\DeviceSystem.inl">
-      <Filter>src\Systems\Implementations\Windows\dx12</Filter>
-    </None>
     <None Include="packages.config" />
-    <None Include="Resources\Implementations\Windows\dx12\Resources.inl">
-      <Filter>src\Resources\Implementations\Windows\dx12</Filter>
-    </None>
-    <None Include="Systems\Implementations\Windows\dx12\SystemUtils.inl">
-      <Filter>src\Systems\Implementations\Windows\dx12</Filter>
-    </None>
   </ItemGroup>
 </Project>

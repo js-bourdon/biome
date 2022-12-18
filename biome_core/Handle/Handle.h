@@ -10,7 +10,7 @@
 
 namespace biome
 {
-    static const uintptr_t Handle_NULL = UINTPTR_MAX;
+    constexpr uintptr_t Handle_NULL = UINTPTR_MAX;
 
     struct alignas(sizeof(uintptr_t)) Handle
     {

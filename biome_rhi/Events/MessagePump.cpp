@@ -1,4 +1,16 @@
 #include <pch.h>
 #include "MessagePump.h"
 
-#include INCLUDE_IMPLEMENTATION(MessagePump)
+bool biome::rhi::events::PumpMessages()
+{
+    MSG msg;
+    msg.message = WM_NULL;
+
+    if (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return msg.message == WM_QUIT;
+}

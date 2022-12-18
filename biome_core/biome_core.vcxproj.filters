@@ -24,20 +24,8 @@
     <Filter Include="src\Memory">
       <UniqueIdentifier>{5536a690-2df4-4044-832e-11da6d65106b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\Memory\Implementation">
-      <UniqueIdentifier>{d30466ef-41e6-4d77-bb89-76215f9a97d8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Memory\Implementation\Windows">
-      <UniqueIdentifier>{4e7439c3-f556-4b51-a152-7d471c77343b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\SystemInfo">
       <UniqueIdentifier>{9cee0d13-4db8-4e5d-b7c8-30941850dfb4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\SystemInfo\Implementations">
-      <UniqueIdentifier>{14ca8c39-a262-411a-9de0-774b04318ba8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\SystemInfo\Implementations\Windows">
-      <UniqueIdentifier>{46203968-16a2-4a81-ae8b-f588afdd923c}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\Threading">
       <UniqueIdentifier>{2c94fbc3-cdca-4415-8dc5-fb0500b996e8}</UniqueIdentifier>
@@ -53,12 +41,6 @@
     </Filter>
     <Filter Include="src\Libraries">
       <UniqueIdentifier>{869e0f44-7b35-4577-8cc2-225156562b80}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Libraries\Implementations">
-      <UniqueIdentifier>{c4da03f9-361c-4215-b8de-a4e3d5141f94}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Libraries\Implementations\Windows">
-      <UniqueIdentifier>{0d3ea0d8-00b2-41e0-8ce0-cc6526872dd7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -192,20 +174,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Memory\Implementations\Windows\VirtualMemoryAllocator.inl">
-      <Filter>src\Memory\Implementation\Windows</Filter>
-    </None>
-    <None Include="SystemInfo\Implementations\Windows\SystemInfo.inl">
-      <Filter>src\SystemInfo\Implementations\Windows</Filter>
-    </None>
     <None Include="FileSystem\FileSystem.inl">
       <Filter>src\FileSystem</Filter>
     </None>
     <None Include="DataStructures\Vector.inl">
       <Filter>src\DataStructures</Filter>
-    </None>
-    <None Include="Libraries\Implementations\Windows\LibraryLoader.inl">
-      <Filter>src\Libraries\Implementations\Windows</Filter>
     </None>
     <None Include="DataStructures\StaticArray.inl">
       <Filter>src\DataStructures</Filter>

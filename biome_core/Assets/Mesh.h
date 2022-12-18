@@ -41,15 +41,16 @@ namespace biome
 
         struct SubMesh
         {
-            BufferView  m_indexBuffer {};
-            uint32_t    m_textureIndex { std::numeric_limits<uint32_t>::max() };
-            uint32_t    m_streamCount { 0 };
-            // VertexStream    m_streams[1];
+            BufferView      m_indexBuffer {};
+            uint32_t        m_textureIndex { std::numeric_limits<uint32_t>::max() };
+            uint32_t        m_streamCount { 0 };
+            VertexStream    m_streams[1] {};
         };
 
         struct Mesh
         {
             uint64_t m_subMeshCount { 0 };
+            SubMesh m_subMeshes[1] {};
         };
     }
 }

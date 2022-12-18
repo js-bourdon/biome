@@ -62,20 +62,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     constexpr uint32_t windowWidth = 1980;
     constexpr uint32_t windowHeight = 1080;
 
-    /*WindowHandle hwnd = factory::CreateNewWindow(reinterpret_cast<biome::rhi::AppHandle>(hInstance), windowWidth, windowHeight, L"Biome");
+    WindowHandle hwnd = factory::CreateNewWindow(reinterpret_cast<biome::rhi::AppHandle>(hInstance), windowWidth, windowHeight, L"Biome");
     factory::DisplayWindow(hwnd);
 
     constexpr uint32_t framesOfLatency = 1;
     const GpuDeviceHandle deviceHdl = device::CreateDevice(framesOfLatency);
-    const CommandQueueHandle cmdQueueHdl = device::CreateCommandQueue(deviceHdl, CommandType::Graphics);*/
+    const CommandQueueHandle cmdQueueHdl = device::CreateCommandQueue(deviceHdl, CommandType::Graphics);
     
     // Assets loading
     AssetDatabase* pAssetDb = LoadDatabase("Media/builds/star_trek_danube_class/StartTrek.db");
     const Texture* pTextures = GetTextures(pAssetDb);
     const Mesh* pMeshes = GetMeshes(pAssetDb);
     BIOME_ASSERT(pAssetDb->m_header.m_meshCount > 0);
-
-
 
     DestroyDatabase(pAssetDb);
 

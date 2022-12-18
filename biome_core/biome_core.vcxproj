@@ -244,9 +244,6 @@
     <None Include="DataStructures\StaticArray.inl" />
     <None Include="DataStructures\Vector.inl" />
     <None Include="FileSystem\FileSystem.inl" />
-    <None Include="Libraries\Implementations\Windows\LibraryLoader.inl" />
-    <None Include="Memory\Implementations\Windows\VirtualMemoryAllocator.inl" />
-    <None Include="SystemInfo\Implementations\Windows\SystemInfo.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

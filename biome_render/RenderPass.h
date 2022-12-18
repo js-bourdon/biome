@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pch.h>
+#include "biome_core/Handle/Handle.h"
 #include "biome_render/RenderUnit.h"
 
 using namespace biome;
@@ -11,9 +11,9 @@ namespace biome::render
 {
     struct RenderPass
     {
-        ShaderResourceLayoutHandle m_resourceLayout { Handle_Null };
-        TextureHandle m_renderTargets[8] { Handle_Null };
-        DescriptorHeapHandle m_descriptorHeap { Handle_Null };
+        ShaderResourceLayoutHandle m_resourceLayout { Handle_NULL };
+        TextureHandle m_renderTargets[8] { Handle_NULL };
+        DescriptorHeapHandle m_descriptorHeap { Handle_NULL };
 
         biome::rhi::Rectangle scissorRect;
         biome::rhi::Viewport viewport;
