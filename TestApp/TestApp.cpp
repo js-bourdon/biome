@@ -13,6 +13,7 @@
 #include "biome_core/Memory/ThreadHeapAllocator.h"
 #include "biome_core/Threading/WorkerThread.h"
 #include "biome_core/Assets/AssetDatabase.h"
+#include "biome_core/FileSystem/FileSystem.h"
 #include "biome_rhi/Systems/DeviceSystem.h"
 #include "biome_rhi/Systems/CommandSystem.h"
 #include "biome_rhi/Descriptors/PipelineDesc.h"
@@ -62,7 +63,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     constexpr uint32_t windowWidth = 1980;
     constexpr uint32_t windowHeight = 1080;
 
-    WindowHandle hwnd = factory::CreateNewWindow(reinterpret_cast<biome::rhi::AppHandle>(hInstance), windowWidth, windowHeight, L"Biome");
+    const WindowHandle hwnd = factory::CreateNewWindow(reinterpret_cast<biome::rhi::AppHandle>(hInstance), windowWidth, windowHeight, L"Biome");
     factory::DisplayWindow(hwnd);
 
     constexpr uint32_t framesOfLatency = 1;
@@ -75,7 +76,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     const Mesh* pMeshes = GetMeshes(pAssetDb);
     BIOME_ASSERT(pAssetDb->m_header.m_meshCount > 0);
 
-    DestroyDatabase(pAssetDb);
+    const Mesh& mesh = pMeshes[0];
+    BIOME_ASSERT(mesh.m_subMeshCount > 0);
+
+    const SubMesh& subMesh = mesh.m_subMeshes[0];
+    const BufferView indexBuffer = subMesh.m_indexBuffer;
+    BIOME_ASSERT(subMesh.m_streamCount > 0);
+    const VertexStream vertexBuffer = subMesh.m_streams[0];
+
+    const StaticArray<uint8_t> buffers = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Buffers.bin");
+
+    const BufferHandle indexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Index, indexBuffer.m_byteSize);
+    const BufferHandle vertexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Vertex, vertexBuffer.m_byteSize);
+
+    uint8_t* pIndexBufferData = device::MapBuffer(indexBufferHdl);
+    uint8_t* pVertexBufferData = device::MapBuffer(vertexBufferHdl);
+
+    memcpy(pIndexBufferData, buffers.Data() + indexBuffer.m_byteOffset, indexBuffer.m_byteSize);
+    memcpy(pVertexBufferData, buffers.Data() + vertexBuffer.m_byteOffset, vertexBuffer.m_byteSize);
+
+    device::UnmapBuffer(indexBufferHdl);
+    device::UnmapBuffer(vertexBufferHdl);
 
     constexpr uint32_t backBufferCount = 2;
     const SwapChainHandle swapChainHdl = device::CreateSwapChain(deviceHdl, cmdQueueHdl, hwnd, windowWidth, windowHeight);
@@ -151,6 +172,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         std::this_thread::sleep_for(100ms);
     }
+
+    DestroyDatabase(pAssetDb);
 
     device::DestroyGfxPipeline(gfxPipeHdl);
     device::DestroyShaderResourceLayout(rscLayoutHdl);

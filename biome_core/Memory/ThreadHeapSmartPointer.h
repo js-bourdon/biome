@@ -19,6 +19,7 @@ namespace biome
             inline T* operator+(size_t offset) { return m_pPtr + offset; }
             inline T* operator->() { return m_pPtr; }
             inline T operator*() { return *m_pPtr; }
+            inline T& operator=(const T& other) = delete;
 
         private:
             T* m_pPtr;

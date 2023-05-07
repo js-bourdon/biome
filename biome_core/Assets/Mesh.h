@@ -52,5 +52,11 @@ namespace biome
             uint64_t m_subMeshCount { 0 };
             SubMesh m_subMeshes[1] {};
         };
+
+        struct MeshAsset
+        {
+            uint32_t m_meshletOffset { 0 };
+            uint32_t m_meshletCount { 0 };
+        };
     }
 }

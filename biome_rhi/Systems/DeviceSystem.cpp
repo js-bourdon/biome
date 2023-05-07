@@ -586,6 +586,20 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
                             pGpuDevice->m_pDebug = pDxgiDebug;
 #endif
 
+                            StaticArray<UploadHeap> uploadHeaps(framesOfLatency + 1);
+                            for (size_t i = 0; i < uploadHeaps.Size(); ++i)
+                            {
+                                ComPtr<ID3D12Heap> uploadHeap;
+                                D3D12_HEAP_DESC heapDesc {};
+                                heapDesc.Properties.Type = D3D12_HEAP_TYPE_UPLOAD;
+                                pDevice->CreateHeap()
+
+                                uploadHeaps[0].m_heapByteSize = GpuDevice::UploadHeapByteSize;
+                                uploadHeaps[0].m_currentUploadHeapIndex = 0;
+                                uploadHeaps[0].m_currentUploadHeapOffset = 0;
+                                uploadHeaps[0].m_spUploadHeaps.Add()
+                            }
+
                             AsHandle(pGpuDevice, deviceHdl);
                         }
                     }
@@ -1028,12 +1042,12 @@ BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, si
 
     D3D12_HEAP_PROPERTIES heapProps;
     heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-    heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
-    heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+    heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
     heapProps.CreationNodeMask = 0;
     heapProps.VisibleNodeMask = 0;
 
-    HRESULT hr = pDevice->m_pDevice->CreateCommittedResource(
+    const HRESULT hr = pDevice->m_pDevice->CreateCommittedResource(
         &heapProps,
         D3D12_HEAP_FLAG_NONE,
         &rscDesc,
@@ -1054,16 +1068,17 @@ BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, si
 
 uint8_t* device::MapBuffer(BufferHandle hdl)
 {
-    uint8_t* pMappedData = nullptr;
+    void* pMappedData = nullptr;
     Buffer* pBuffer = ToType(hdl);
-    //pBuffer->m_pResource->Map(0, )
+    pBuffer->m_pResource->Map(0, nullptr, &pMappedData);
 
-    return pMappedData;
+    return static_cast<uint8_t*>(pMappedData);
 }
 
 void device::UnmapBuffer(BufferHandle hdl)
 {
     Buffer* pBuffer = ToType(hdl);
+    pBuffer->m_pResource->Unmap(0, nullptr);
 }
 
 void device::DestroyDevice(GpuDeviceHandle hdl)

@@ -24,8 +24,6 @@
 
     #define EXPORT_SYMBOL __declspec(dllexport)
     #define PLATFORM_WINDOWS 1
-    #define INCLUDE_IMPLEMENTATION(fileName) STRINGIFY(CONCAT(CONCAT(Implementations/Windows/, fileName), .inl))
-    #define INCLUDE_RHI_IMPLEMENTATION(fileName) STRINGIFY(CONCAT(CONCAT(Implementations/Windows/dx12/, fileName), .inl))
 
     #ifdef _DEBUG
         #define CHECK_HRESULT_RETURN_VALUE_INTERNAL(hr, x, v)                                                                           \
