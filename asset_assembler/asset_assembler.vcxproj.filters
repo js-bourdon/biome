@@ -27,6 +27,9 @@
     <Filter Include="stb">
       <UniqueIdentifier>{7420652a-9101-4abe-a194-ce499450b6db}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Meshlet">
+      <UniqueIdentifier>{c0a24854-4ccd-4418-877e-8ee6daf9979e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -155,6 +158,9 @@
     <ClInclude Include="stb\stb_image.h">
       <Filter>stb</Filter>
     </ClInclude>
+    <ClInclude Include="meshlet\MeshletBuilder.h">
+      <Filter>src\Meshlet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="database\AssetDatabaseBuilder.cpp">
@@ -169,5 +175,11 @@
     <ClCompile Include="stb\stb_image.cpp">
       <Filter>stb</Filter>
     </ClCompile>
+    <ClCompile Include="meshlet\MeshletBuilder.cpp">
+      <Filter>src\Meshlet</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

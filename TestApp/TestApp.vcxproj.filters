@@ -59,6 +59,9 @@
     <FxCompile Include="Shaders\fullscreen_ps.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\assets_ms.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\common.hlsli">

@@ -2,6 +2,7 @@
 
 #include "biome_rhi/Resources/ResourceHandles.h"
 #include "biome_core/DataStructures/StaticArray.h"
+#include "biome_core/DataStructures/Vector.h"
 #include "biome_core/Memory/MemoryOffsetAllocator.h"
 
 namespace biome::rhi
@@ -14,19 +15,31 @@ namespace biome::rhi
             MemoryOffsetAllocator           m_OffsetAllocator {};
         };
 
+        struct UploadHeap
+        {
+            biome::data::Vector<ComPtr<ID3D12Heap>> m_spUploadHeaps {};
+            uint32_t                                m_heapByteSize { 0 };
+            uint32_t                                m_currentUploadHeapIndex { 0 };
+            uint32_t                                m_currentUploadHeapOffset { 0 };
+        };
+
         struct GpuDevice
         {
-            ComPtr<ID3D12Device>            m_pDevice { nullptr };
-            ComPtr<ID3D12DescriptorHeap>    m_pRtvDescriptorHeap { nullptr };
-            ComPtr<ID3D12Fence>             m_pFrameFence { nullptr };
-#ifdef _DEBUG
-            ComPtr<IDXGIDebug>              m_pDebug { nullptr };
-#endif
-            DescriptorHeap                  m_ResourceViewHeap {};
-            uint64_t                        m_currentFrame { 0 };
-            HANDLE                          m_fenceEvent {};
-            uint32_t                        m_rtvDescriptorSize { 0 };
-            uint32_t                        m_framesOfLatency { 0 };
+            static constexpr uint32_t               UploadHeapByteSize = MiB(128);
+
+            ComPtr<ID3D12Device>                    m_pDevice { nullptr };
+            ComPtr<ID3D12DescriptorHeap>            m_pRtvDescriptorHeap { nullptr };
+            ComPtr<ID3D12Fence>                     m_pFrameFence { nullptr };
+        #ifdef _DEBUG
+            ComPtr<IDXGIDebug>                      m_pDebug { nullptr };
+        #endif
+            biome::data::StaticArray<UploadHeap>    m_UploadHeaps {};
+            DescriptorHeap                          m_ResourceViewHeap {};
+            uint64_t                                m_currentFrame { 0 };
+            HANDLE                                  m_fenceEvent {};
+            uint32_t                                m_rtvDescriptorSize { 0 };
+            uint32_t                                m_framesOfLatency { 0 };
+            
         };
 
         struct SwapChain

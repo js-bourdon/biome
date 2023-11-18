@@ -72,7 +72,7 @@ str_smart_ptr biome::filesystem::ExtractDirectoryPath(const char* pFilePath)
     dirPath[dirLen] = 0;
     memcpy(dirPath, pFilePath, dirLen);
 
-    return std::move(dirPath);
+    return dirPath;
 }
 
 str_smart_ptr biome::filesystem::AppendPaths(const char* pDirectoryPath, const char* pFilePath)
@@ -87,5 +87,5 @@ str_smart_ptr biome::filesystem::AppendPaths(const char* pDirectoryPath, const c
     memcpy(destFilePath, pDirectoryPath, dirPathLen);
     memcpy(destFilePath + dirPathLen, pFilePath, filePathLen);
 
-    return std::move(destFilePath);
+    return destFilePath;
 }
