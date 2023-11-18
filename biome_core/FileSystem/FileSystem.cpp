@@ -64,7 +64,7 @@ bool biome::filesystem::CreateDirectory(const char* pDirectoryPath)
     return hasSuccessfullyCreateDirectory;
 }
 
-str_smart_ptr&& biome::filesystem::ExtractDirectoryPath(const char* pFilePath)
+str_smart_ptr biome::filesystem::ExtractDirectoryPath(const char* pFilePath)
 {
     const char* pDirectoryEnd = strrchr(pFilePath, '/');
     size_t dirLen = static_cast<size_t>(reinterpret_cast<uintptr_t>(pDirectoryEnd) - reinterpret_cast<uintptr_t>(pFilePath));
@@ -75,7 +75,7 @@ str_smart_ptr&& biome::filesystem::ExtractDirectoryPath(const char* pFilePath)
     return std::move(dirPath);
 }
 
-str_smart_ptr&& biome::filesystem::AppendPaths(const char* pDirectoryPath, const char* pFilePath)
+str_smart_ptr biome::filesystem::AppendPaths(const char* pDirectoryPath, const char* pFilePath)
 {
     size_t dirPathLen = strlen(pDirectoryPath);
     size_t filePathLen = strlen(pFilePath);

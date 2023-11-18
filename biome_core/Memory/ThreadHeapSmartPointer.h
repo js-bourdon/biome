@@ -13,6 +13,8 @@ namespace biome
             ThreadHeapSmartPointer(const ThreadHeapSmartPointer& other) = delete;
             ThreadHeapSmartPointer(ThreadHeapSmartPointer&& other) noexcept { m_pPtr = other.m_pPtr; other.m_pPtr = nullptr; }
             ~ThreadHeapSmartPointer() { if (m_pPtr) ThreadHeapAllocator::Release(m_pPtr); }
+            ThreadHeapSmartPointer& operator=(ThreadHeapSmartPointer&& other) { m_pPtr = other.m_pPtr; other.m_pPtr = nullptr; }
+            ThreadHeapSmartPointer& operator=(const ThreadHeapSmartPointer& other) = delete;
 
             inline operator T*() { return m_pPtr; }
             inline T& operator[](size_t index) { return m_pPtr[index]; }

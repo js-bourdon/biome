@@ -23,7 +23,7 @@
     <ProjectGuid>{47BA147B-3811-44D8-ACF8-C8CF87880980}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>biome_core</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
     <ProjectName>biome_core</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -190,6 +190,7 @@
     <ClInclude Include="DataStructures\StaticArray.h" />
     <ClInclude Include="DataStructures\Vector.h" />
     <ClInclude Include="FileSystem\FileSystem.h" />
+    <ClInclude Include="FileSystem\FileSystemWatcher.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Handle\Handle.h" />
     <ClInclude Include="Libraries\LibraryLoader.h" />
@@ -212,6 +213,7 @@
     <ClCompile Include="Assets\AssetDatabase.cpp" />
     <ClCompile Include="DataStructures\IndexFreeList.cpp" />
     <ClCompile Include="FileSystem\FileSystem.cpp" />
+    <ClCompile Include="FileSystem\FileSystemWatcher.cpp" />
     <ClCompile Include="Libraries\LibraryLoader.cpp" />
     <ClCompile Include="Memory\FrameMemoryAllocator.cpp" />
     <ClCompile Include="Memory\Memory.cpp" />

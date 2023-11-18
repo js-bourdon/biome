@@ -125,6 +125,9 @@
     <ClInclude Include="Memory\MemoryOffsetAllocator.h">
       <Filter>src\Memory</Filter>
     </ClInclude>
+    <ClInclude Include="FileSystem\FileSystemWatcher.h">
+      <Filter>src\FileSystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructures\IndexFreeList.cpp">
@@ -171,6 +174,9 @@
     </ClCompile>
     <ClCompile Include="Memory\MemoryOffsetAllocator.cpp">
       <Filter>src\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\FileSystemWatcher.cpp">
+      <Filter>src\FileSystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

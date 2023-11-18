@@ -100,7 +100,6 @@ void WorkerThread<ReturnType(ArgumentTypes...)>::Run(ArgumentTypes... args)
     std::unique_lock<std::mutex> lck(m_Mutex);
     m_Arguments = std::make_tuple(args...);
     m_CondValue.notify_all();
-    m_CondValue.wait(lck);
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
@@ -128,9 +127,7 @@ void WorkerThread<ReturnType(ArgumentTypes...)>::Execute()
 
     while (m_Running)
     {
-        m_CondValue.notify_all();
         m_ReturnedArg = std::apply(m_Function, m_Arguments);
-        m_CondValue.notify_all();
         m_CondValue.wait(lck);
     }
 
