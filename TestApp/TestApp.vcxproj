@@ -31,7 +31,7 @@
     <ProjectGuid>{799B83ED-6E34-4EEA-B8D5-9B9B14FF57E0}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>TestApp</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
     <ProjectName>TestApp</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

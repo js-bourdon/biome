@@ -24,7 +24,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{3b1b2795-580e-457d-a8a4-68ef45a32b9f}</ProjectGuid>
     <RootNamespace>biome_rhi</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
     <ProjectName>biome_rhi</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
