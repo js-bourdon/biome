@@ -53,8 +53,8 @@ template<typename T>
 PackedArray<T>::PackedArray(uint32_t capacity)
 {
     m_Lookup.Init(capacity);
-    m_LookupHandles = static_cast<Handle*>(biome::memory::AlignedAlloc(capacity, alignof(Handle)));
-    m_Values = static_cast<T*>(biome::memory::AlignedAlloc(capacity, alignof(T)));
+    m_LookupHandles = static_cast<Handle*>(biome::memory::AlignedAlloc(capacity * sizeof(Handle), alignof(Handle)));
+    m_Values = static_cast<T*>(biome::memory::AlignedAlloc(capacity * sizeof(T), alignof(T)));
 }
 
 template<typename T>
