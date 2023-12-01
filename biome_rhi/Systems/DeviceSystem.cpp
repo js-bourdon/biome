@@ -591,13 +591,21 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
                             {
                                 ComPtr<ID3D12Heap> uploadHeap;
                                 D3D12_HEAP_DESC heapDesc {};
+                                heapDesc.SizeInBytes = GpuDevice::UploadHeapByteSize;
                                 heapDesc.Properties.Type = D3D12_HEAP_TYPE_UPLOAD;
-                                pDevice->CreateHeap()
-
-                                uploadHeaps[0].m_heapByteSize = GpuDevice::UploadHeapByteSize;
-                                uploadHeaps[0].m_currentUploadHeapIndex = 0;
-                                uploadHeaps[0].m_currentUploadHeapOffset = 0;
-                                uploadHeaps[0].m_spUploadHeaps.Add()
+                                heapDesc.Properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
+                                heapDesc.Properties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+                                heapDesc.Properties.CreationNodeMask = 0;
+                                heapDesc.Properties.VisibleNodeMask = 0;
+                                heapDesc.Alignment = 0;
+                                heapDesc.Flags = D3D12_HEAP_FLAG_CREATE_NOT_ZEROED;
+                                if (SUCCEEDED(pDevice->CreateHeap(&heapDesc, IID_PPV_ARGS(uploadHeap.ReleaseAndGetAddressOf()))))
+                                {
+                                    uploadHeaps[0].m_heapByteSize = GpuDevice::UploadHeapByteSize;
+                                    uploadHeaps[0].m_currentUploadHeapIndex = 0;
+                                    uploadHeaps[0].m_currentUploadHeapOffset = 0;
+                                    uploadHeaps[0].m_spUploadHeaps.Add(uploadHeap);
+                                }
                             }
 
                             AsHandle(pGpuDevice, deviceHdl);
