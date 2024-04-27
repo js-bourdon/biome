@@ -9,7 +9,7 @@ namespace biome
 {
     namespace data
     {
-        template<typename ValueType, typename AllocatorType = ThreadHeapAllocator>
+        template<typename ValueType, bool CleanConstructDelete = false, typename AllocatorType = ThreadHeapAllocator>
         class Vector
         {
         public:

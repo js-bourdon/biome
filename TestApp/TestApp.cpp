@@ -68,7 +68,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     constexpr uint32_t framesOfLatency = 1;
     const GpuDeviceHandle deviceHdl = device::CreateDevice(framesOfLatency);
-    const CommandQueueHandle cmdQueueHdl = device::CreateCommandQueue(deviceHdl, CommandType::Graphics);
+    const CommandQueueHandle cmdQueueHdl = device::GetCommandQueue(deviceHdl, CommandType::Graphics);
     
     // Assets loading
     AssetDatabase* pAssetDb = LoadDatabase("Media/builds/star_trek_danube_class/StartTrek.db");
@@ -89,14 +89,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     const BufferHandle indexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Index, indexBuffer.m_byteSize);
     const BufferHandle vertexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Vertex, vertexBuffer.m_byteSize);
 
-    uint8_t* pIndexBufferData = device::MapBuffer(indexBufferHdl);
-    uint8_t* pVertexBufferData = device::MapBuffer(vertexBufferHdl);
+    uint8_t* pIndexBufferData = device::MapBuffer(deviceHdl, indexBufferHdl);
+    uint8_t* pVertexBufferData = device::MapBuffer(deviceHdl, vertexBufferHdl);
 
     memcpy(pIndexBufferData, buffers.Data() + indexBuffer.m_byteOffset, indexBuffer.m_byteSize);
     memcpy(pVertexBufferData, buffers.Data() + vertexBuffer.m_byteOffset, vertexBuffer.m_byteSize);
 
-    device::UnmapBuffer(indexBufferHdl);
-    device::UnmapBuffer(vertexBufferHdl);
+    device::UnmapBuffer(deviceHdl, indexBufferHdl);
+    device::UnmapBuffer(deviceHdl, vertexBufferHdl);
 
     constexpr uint32_t backBufferCount = 2;
     const SwapChainHandle swapChainHdl = device::CreateSwapChain(deviceHdl, cmdQueueHdl, hwnd, windowWidth, windowHeight);
@@ -139,6 +139,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     while (!biome::rhi::events::PumpMessages())
     {
+        // Perform any upload heap copy before calling StartFrame.
+        // Transfer to GPU happens in StartFrame.
+
         device::StartFrame(deviceHdl, cmdQueueHdl, cmdBufferHdl);
 
         const TextureHandle backBufferHdl = device::GetBackBuffer(deviceHdl, swapChainHdl);

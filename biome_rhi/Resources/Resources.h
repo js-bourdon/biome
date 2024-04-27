@@ -25,20 +25,21 @@ namespace biome::rhi
 
         struct GpuDevice
         {
-            static constexpr uint32_t               UploadHeapByteSize = MiB(128);
+            static constexpr uint32_t                       UploadHeapByteSize = MiB(128);
 
-            ComPtr<ID3D12Device>                    m_pDevice { nullptr };
-            ComPtr<ID3D12DescriptorHeap>            m_pRtvDescriptorHeap { nullptr };
-            ComPtr<ID3D12Fence>                     m_pFrameFence { nullptr };
+            ComPtr<ID3D12Device>                            m_pDevice { nullptr };
+            ComPtr<ID3D12DescriptorHeap>                    m_pRtvDescriptorHeap { nullptr };
+            ComPtr<ID3D12Fence>                             m_pFrameFence { nullptr };
         #ifdef _DEBUG
-            ComPtr<IDXGIDebug>                      m_pDebug { nullptr };
+            ComPtr<IDXGIDebug>                              m_pDebug { nullptr };
         #endif
-            biome::data::StaticArray<UploadHeap>    m_UploadHeaps {};
-            DescriptorHeap                          m_ResourceViewHeap {};
-            uint64_t                                m_currentFrame { 0 };
-            HANDLE                                  m_fenceEvent {};
-            uint32_t                                m_rtvDescriptorSize { 0 };
-            uint32_t                                m_framesOfLatency { 0 };
+            biome::data::StaticArray<CommandQueueHandle>    m_CommandQueues {};
+            biome::data::StaticArray<UploadHeap>            m_UploadHeaps {};
+            DescriptorHeap                                  m_ResourceViewHeap {};
+            uint64_t                                        m_currentFrame { 0 };
+            HANDLE                                          m_fenceEvent {};
+            uint32_t                                        m_rtvDescriptorSize { 0 };
+            uint32_t                                        m_framesOfLatency { 0 };
             
         };
 

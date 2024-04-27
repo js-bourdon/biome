@@ -432,6 +432,26 @@ namespace
             return nullptr;
         }
     }
+
+    static CommandQueueHandle CreateCommandQueue(GpuDevice* pGpuDevice, CommandType type)
+    {
+        CommandQueueHandle cmdQueueHandle = Handle_NULL;
+        ID3D12Device* pDevice = pGpuDevice->m_pDevice.Get();
+
+        D3D12_COMMAND_LIST_TYPE cmdType = ToNativeCmdType(type);
+
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = cmdType;
+
+        ID3D12CommandQueue* pCmdQueue;
+        if (SUCCEEDED(pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&pCmdQueue))))
+        {
+            AsHandle(pCmdQueue, cmdQueueHandle);
+        }
+
+        return cmdQueueHandle;
+    }
 }
 
 void device::StartFrame(
@@ -534,111 +554,125 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
 #endif
 
     ComPtr<IDXGIFactory4> factory;
-    if (SUCCEEDED(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory))))
+    if (FAILED(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory))))
     {
-        ComPtr<IDXGIAdapter1> hardwareAdapter;
-        if (GetHardwareAdapter(factory.Get(), &hardwareAdapter))
-        {
-            ComPtr<ID3D12Device> pDevice {};
-            ComPtr<ID3D12DescriptorHeap> pRtvDescriptorHeap {};
-            ComPtr<ID3D12DescriptorHeap> pViewDescriptorHeap {};
-            ComPtr<ID3D12Fence> pFrameFence {};
-            ComPtr<IDXGIDebug> pDebug {};
+        return Handle_NULL;
+    }
 
-            if (SUCCEEDED(D3D12CreateDevice(
-                hardwareAdapter.Get(),
-                D3D_FEATURE_LEVEL_12_1,
-                IID_PPV_ARGS(pDevice.ReleaseAndGetAddressOf()))))
-            {
-                D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-                rtvHeapDesc.NumDescriptors = framesOfLatency + 1;
-                rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-                rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    ComPtr<IDXGIAdapter1> hardwareAdapter;
+    if (!GetHardwareAdapter(factory.Get(), &hardwareAdapter))
+    {
+        return Handle_NULL;
+    }
 
-                if (SUCCEEDED(pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(pRtvDescriptorHeap.ReleaseAndGetAddressOf()))))
-                {
-                    static constexpr uint32_t ViewDescCount = 1024;
+    ComPtr<ID3D12Device> pDevice{};
+    ComPtr<ID3D12DescriptorHeap> pRtvDescriptorHeap{};
+    ComPtr<ID3D12DescriptorHeap> pViewDescriptorHeap{};
+    ComPtr<ID3D12Fence> pFrameFence{};
+    ComPtr<IDXGIDebug> pDebug{};
 
-                    D3D12_DESCRIPTOR_HEAP_DESC viewHeapDesc = {};
-                    viewHeapDesc.NumDescriptors = ViewDescCount;
-                    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-                    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    if (FAILED(D3D12CreateDevice(
+        hardwareAdapter.Get(),
+        D3D_FEATURE_LEVEL_12_1,
+        IID_PPV_ARGS(pDevice.ReleaseAndGetAddressOf()))))
+    {
+        return Handle_NULL;
+    }
 
-                    if (SUCCEEDED(pDevice->CreateDescriptorHeap(&viewHeapDesc, IID_PPV_ARGS(pViewDescriptorHeap.ReleaseAndGetAddressOf()))))
-                    {
-                        if (SUCCEEDED(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(pFrameFence.ReleaseAndGetAddressOf()))))
-                        {
-                            const HANDLE fenceEvent = CreateEvent(
-                                nullptr,    // Security attributes
-                                FALSE,      // Manual reset
-                                FALSE,      // Initial state
-                                L"FrameFenceEvent");
+    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+    rtvHeapDesc.NumDescriptors = framesOfLatency + 1;
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-                            GpuDevice* pGpuDevice = new GpuDevice();
-                            pGpuDevice->m_pDevice = pDevice;
-                            pGpuDevice->m_pRtvDescriptorHeap = pRtvDescriptorHeap;
-                            pGpuDevice->m_pFrameFence = pFrameFence;
-                            pGpuDevice->m_fenceEvent = fenceEvent;
-                            pGpuDevice->m_framesOfLatency = framesOfLatency;
-                            pGpuDevice->m_rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    if (FAILED(pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(pRtvDescriptorHeap.ReleaseAndGetAddressOf()))))
+    {
+        return Handle_NULL;
+    }
+
+    static constexpr uint32_t ViewDescCount = 1024;
+
+    D3D12_DESCRIPTOR_HEAP_DESC viewHeapDesc = {};
+    viewHeapDesc.NumDescriptors = ViewDescCount;
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+    if (FAILED(pDevice->CreateDescriptorHeap(&viewHeapDesc, IID_PPV_ARGS(pViewDescriptorHeap.ReleaseAndGetAddressOf()))))
+    {
+        return Handle_NULL;
+    }
+
+    if (FAILED(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(pFrameFence.ReleaseAndGetAddressOf()))))
+    {
+        return Handle_NULL;
+    }
+
+    const HANDLE fenceEvent = CreateEvent(
+        nullptr,    // Security attributes
+        FALSE,      // Manual reset
+        FALSE,      // Initial state
+        L"FrameFenceEvent");
+
+    GpuDevice* pGpuDevice = new GpuDevice();
+    pGpuDevice->m_pDevice = pDevice;
+    pGpuDevice->m_pRtvDescriptorHeap = pRtvDescriptorHeap;
+    pGpuDevice->m_pFrameFence = pFrameFence;
+    pGpuDevice->m_fenceEvent = fenceEvent;
+    pGpuDevice->m_framesOfLatency = framesOfLatency;
+    pGpuDevice->m_rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 #ifdef _DEBUG
-                            pGpuDevice->m_pDebug = pDxgiDebug;
+    pGpuDevice->m_pDebug = pDxgiDebug;
 #endif
 
-                            StaticArray<UploadHeap> uploadHeaps(framesOfLatency + 1);
-                            for (size_t i = 0; i < uploadHeaps.Size(); ++i)
-                            {
-                                ComPtr<ID3D12Heap> uploadHeap;
-                                D3D12_HEAP_DESC heapDesc {};
-                                heapDesc.SizeInBytes = GpuDevice::UploadHeapByteSize;
-                                heapDesc.Properties.Type = D3D12_HEAP_TYPE_UPLOAD;
-                                heapDesc.Properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
-                                heapDesc.Properties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
-                                heapDesc.Properties.CreationNodeMask = 0;
-                                heapDesc.Properties.VisibleNodeMask = 0;
-                                heapDesc.Alignment = 0;
-                                heapDesc.Flags = D3D12_HEAP_FLAG_CREATE_NOT_ZEROED;
-                                if (SUCCEEDED(pDevice->CreateHeap(&heapDesc, IID_PPV_ARGS(uploadHeap.ReleaseAndGetAddressOf()))))
-                                {
-                                    uploadHeaps[0].m_heapByteSize = GpuDevice::UploadHeapByteSize;
-                                    uploadHeaps[0].m_currentUploadHeapIndex = 0;
-                                    uploadHeaps[0].m_currentUploadHeapOffset = 0;
-                                    uploadHeaps[0].m_spUploadHeaps.Add(uploadHeap);
-                                }
-                            }
+    StaticArray<UploadHeap> uploadHeaps(framesOfLatency + 1);
+    for (size_t i = 0; i < uploadHeaps.Size(); ++i)
+    {
+        ComPtr<ID3D12Heap> uploadHeap;
+        D3D12_HEAP_DESC heapDesc{};
+        heapDesc.SizeInBytes = GpuDevice::UploadHeapByteSize;
+        heapDesc.Properties.Type = D3D12_HEAP_TYPE_UPLOAD;
+        heapDesc.Properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        heapDesc.Properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+        heapDesc.Properties.CreationNodeMask = 0;
+        heapDesc.Properties.VisibleNodeMask = 0;
+        heapDesc.Alignment = 0;
+        heapDesc.Flags = D3D12_HEAP_FLAG_CREATE_NOT_ZEROED;
 
-                            AsHandle(pGpuDevice, deviceHdl);
-                        }
-                    }
-                }
-            }
+        if (SUCCEEDED(pDevice->CreateHeap(&heapDesc, IID_PPV_ARGS(uploadHeap.ReleaseAndGetAddressOf()))))
+        {
+            uploadHeaps[i].m_heapByteSize = GpuDevice::UploadHeapByteSize;
+            uploadHeaps[i].m_currentUploadHeapIndex = 0;
+            uploadHeaps[i].m_currentUploadHeapOffset = 0;
+            uploadHeaps[i].m_spUploadHeaps.Add(uploadHeap);
         }
     }
+
+    pGpuDevice->m_UploadHeaps = std::move(uploadHeaps);
+
+    const size_t queueTypeCount = static_cast<size_t>(CommandType::Count);
+    StaticArray<CommandQueueHandle> commandQueues(queueTypeCount);
+
+    for (size_t queueIndex = 0; queueIndex < queueTypeCount; ++queueIndex)
+    {
+        const CommandType cmdType = static_cast<CommandType>(queueIndex);
+        commandQueues[queueIndex] = CreateCommandQueue(pGpuDevice, cmdType);
+    }
+
+    pGpuDevice->m_CommandQueues = std::move(commandQueues);
+
+    AsHandle(pGpuDevice, deviceHdl);
 
     return deviceHdl;
 }
 
-CommandQueueHandle device::CreateCommandQueue(GpuDeviceHandle deviceHdl, CommandType type)
+CommandQueueHandle device::GetCommandQueue(GpuDeviceHandle deviceHdl, CommandType type)
 {
-    CommandQueueHandle cmdQueueHandle = Handle_NULL;
     GpuDevice* pGpuDevice;
     AsType(pGpuDevice, deviceHdl);
-    ID3D12Device* pDevice = pGpuDevice->m_pDevice.Get();
 
-    D3D12_COMMAND_LIST_TYPE cmdType = ToNativeCmdType(type);
-
-    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    queueDesc.Type = cmdType;
-
-    ID3D12CommandQueue* pCmdQueue;
-    if (SUCCEEDED(pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&pCmdQueue))))
-    {
-        AsHandle(pCmdQueue, cmdQueueHandle);
-    }
-
-    return cmdQueueHandle;
+    const uint32_t queueIndex = static_cast<uint32_t>(type);
+    BIOME_ASSERT(queueIndex < pGpuDevice->m_CommandQueues.Size());
+    return pGpuDevice->m_CommandQueues[queueIndex];
 }
 
 CommandBufferHandle device::CreateCommandBuffer(GpuDeviceHandle deviceHdl, CommandType type)
@@ -855,7 +889,7 @@ ShaderResourceLayoutHandle device::CreateShaderResourceLayout(GpuDeviceHandle de
 
     if (cParamCount > 0)
     {
-        biome::data::Vector<D3D12_ROOT_PARAMETER1, memory::StackAllocator> rootParams(cParamCount, cParamCount);
+        biome::data::Vector<D3D12_ROOT_PARAMETER1, true, memory::StackAllocator> rootParams(cParamCount, cParamCount);
 
         for (uint32_t constantIndex = 0; constantIndex < desc.ConstantCount; ++constantIndex)
         {
@@ -1031,20 +1065,20 @@ BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, si
     rscDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     rscDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-    const D3D12_RESOURCE_STATES nativeRscState = [type]()
+    const D3D12_RESOURCE_STATES nativeRscState = [](BufferType type)
     {
         switch (type)
         {
         case BufferType::Vertex:
         case BufferType::Constant:
-            return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+            return D3D12_RESOURCE_STATE_COMMON;
         case BufferType::Index:
-            return D3D12_RESOURCE_STATE_INDEX_BUFFER;
+            return D3D12_RESOURCE_STATE_COMMON;
         default:
             BIOME_FAIL_MSG("Unsupported BufferType");
             return D3D12_RESOURCE_STATE_COMMON;
         }
-    }();
+    }(type);
 
     std::unique_ptr<Buffer> spBuffer = std::make_unique<Buffer>();
 
@@ -1074,18 +1108,25 @@ BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, si
     return ToHandle(pBuffer);
 }
 
-uint8_t* device::MapBuffer(BufferHandle hdl)
+uint8_t* device::MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
 {
-    void* pMappedData = nullptr;
+    //const uint64_t nextAllocatorIndex = nextFrame % (pGpuDevice->m_framesOfLatency + 1);
+
+    GpuDevice* pDevice = ToType(deviceHdl);
     Buffer* pBuffer = ToType(hdl);
+
+    void* pMappedData = nullptr;
+    
     pBuffer->m_pResource->Map(0, nullptr, &pMappedData);
 
     return static_cast<uint8_t*>(pMappedData);
 }
 
-void device::UnmapBuffer(BufferHandle hdl)
+void device::UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
 {
+    GpuDevice* pDevice = ToType(deviceHdl);
     Buffer* pBuffer = ToType(hdl);
+
     pBuffer->m_pResource->Unmap(0, nullptr);
 }
 

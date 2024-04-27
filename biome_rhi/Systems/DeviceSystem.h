@@ -21,7 +21,7 @@ namespace biome::rhi
     namespace device
     {
         GpuDeviceHandle             CreateDevice(uint32_t framesOfLatency);
-        CommandQueueHandle          CreateCommandQueue(GpuDeviceHandle deviceHdl, CommandType type);
+        CommandQueueHandle          GetCommandQueue(GpuDeviceHandle deviceHdl, CommandType type);
         CommandBufferHandle         CreateCommandBuffer(GpuDeviceHandle deviceHdl, CommandType type);
 
         SwapChainHandle             CreateSwapChain(
@@ -47,8 +47,8 @@ namespace biome::rhi
 
         BufferHandle                CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t bufferByteSize);
 
-        uint8_t*                    MapBuffer(BufferHandle hdl);
-        void                        UnmapBuffer(BufferHandle hdl);
+        uint8_t*                    MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
+        void                        UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
 
         void                        DestroyDevice(GpuDeviceHandle hdl);
         void                        DestroyCommandQueue(CommandQueueHandle hdl);
