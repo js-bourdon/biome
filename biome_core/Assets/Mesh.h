@@ -44,13 +44,13 @@ namespace biome
             BufferView      m_indexBuffer {};
             uint32_t        m_textureIndex { std::numeric_limits<uint32_t>::max() };
             uint32_t        m_streamCount { 0 };
-            VertexStream    m_streams[1] {};
+            VertexStream    m_streams[1] {}; // Needs to be at the end to adapt to allocation size.
         };
 
         struct Mesh
         {
             uint64_t m_subMeshCount { 0 };
-            SubMesh m_subMeshes[1] {};
+            SubMesh m_subMeshes[1] {}; // Needs to be at the end to adapt to allocation size.
         };
 
         struct MeshAsset

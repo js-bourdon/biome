@@ -86,11 +86,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     const StaticArray<uint8_t> buffers = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Buffers.bin");
 
-    const BufferHandle indexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Index, indexBuffer.m_byteSize);
-    const BufferHandle vertexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Vertex, vertexBuffer.m_byteSize);
+    const BufferHandle indexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Index, static_cast<uint32_t>(indexBuffer.m_byteSize));
+    const BufferHandle vertexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Vertex, static_cast<uint32_t>(vertexBuffer.m_byteSize));
 
-    uint8_t* pIndexBufferData = device::MapBuffer(deviceHdl, indexBufferHdl);
-    uint8_t* pVertexBufferData = device::MapBuffer(deviceHdl, vertexBufferHdl);
+    void* pIndexBufferData = device::MapBuffer(deviceHdl, indexBufferHdl);
+    void* pVertexBufferData = device::MapBuffer(deviceHdl, vertexBufferHdl);
 
     memcpy(pIndexBufferData, buffers.Data() + indexBuffer.m_byteOffset, indexBuffer.m_byteSize);
     memcpy(pVertexBufferData, buffers.Data() + vertexBuffer.m_byteOffset, vertexBuffer.m_byteSize);

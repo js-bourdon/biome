@@ -17,10 +17,10 @@ namespace biome::rhi
 
         struct UploadHeap
         {
-            biome::data::Vector<ComPtr<ID3D12Heap>> m_spUploadHeaps {};
-            uint32_t                                m_heapByteSize { 0 };
-            uint32_t                                m_currentUploadHeapIndex { 0 };
-            uint32_t                                m_currentUploadHeapOffset { 0 };
+            biome::data::Vector<ComPtr<ID3D12Resource>> m_spUploadBuffers {};
+            uint32_t                                    m_heapByteSize { 0 };
+            uint32_t                                    m_currentUploadHeapIndex { 0 };
+            uint32_t                                    m_currentUploadHeapOffset { 0 };
         };
 
         struct GpuDevice
@@ -73,7 +73,7 @@ namespace biome::rhi
 
         struct Buffer : public Resource
         {
-            size_t                      m_byteSize { 0 };
+            uint32_t                    m_byteSize { 0 };
         };
     }
 

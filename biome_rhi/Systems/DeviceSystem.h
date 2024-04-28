@@ -45,9 +45,9 @@ namespace biome::rhi
         ComputePipelineHandle       CreateComputePipeline(GpuDeviceHandle deviceHdl, const ComputePipelineDesc& desc);
         DescriptorHeapHandle        CreateDescriptorHeap(GpuDeviceHandle deviceHdl);
 
-        BufferHandle                CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t bufferByteSize);
+        BufferHandle                CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, uint32_t bufferByteSize);
 
-        uint8_t*                    MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
+        void*                       MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
         void                        UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
 
         void                        DestroyDevice(GpuDeviceHandle hdl);

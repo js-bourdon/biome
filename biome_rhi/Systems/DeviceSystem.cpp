@@ -452,6 +452,66 @@ namespace
 
         return cmdQueueHandle;
     }
+
+    static HRESULT AddUploadBuffer(ID3D12Device* pDevice, UploadHeap& uploadHeap)
+    {
+        D3D12_RESOURCE_DESC rscDesc;
+        rscDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        rscDesc.Alignment = 0;
+        rscDesc.Width = uploadHeap.m_heapByteSize;
+        rscDesc.Height = 1;
+        rscDesc.DepthOrArraySize = 1;
+        rscDesc.MipLevels = 1;
+        rscDesc.Format = DXGI_FORMAT_UNKNOWN;
+        rscDesc.SampleDesc.Count = 1;
+        rscDesc.SampleDesc.Quality = 0;
+        rscDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        rscDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+        constexpr D3D12_RESOURCE_STATES rscState = D3D12_RESOURCE_STATE_COMMON;
+
+        D3D12_HEAP_PROPERTIES heapProps;
+        heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+        heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+        heapProps.CreationNodeMask = 0;
+        heapProps.VisibleNodeMask = 0;
+
+        ComPtr<ID3D12Resource> spBuffer = {};
+
+        const HRESULT hr = pDevice->CreateCommittedResource(
+            &heapProps,
+            D3D12_HEAP_FLAG_NONE,
+            &rscDesc,
+            rscState,
+            nullptr,
+            IID_PPV_ARGS(spBuffer.GetAddressOf()));
+
+        if (SUCCEEDED(hr))
+        {
+            uploadHeap.m_spUploadBuffers.Add(spBuffer);
+        }
+
+        return hr;
+    }
+
+    static void EnsureUploadSpace(GpuDevice* pGpuDevice, UploadHeap& uploadHeap, const size_t byteSize)
+    {
+        BIOME_ASSERT(byteSize <= uploadHeap.m_heapByteSize);
+
+        const uint32_t freeByteSize = uploadHeap.m_heapByteSize - uploadHeap.m_currentUploadHeapOffset;
+        if (freeByteSize < byteSize)
+        {
+            uploadHeap.m_currentUploadHeapOffset = 0;
+            const size_t bufferCount = uploadHeap.m_spUploadBuffers.Size();
+            if (uploadHeap.m_currentUploadHeapIndex == bufferCount - 1)
+            {
+                // We're out of space, we need another buffer
+                ++uploadHeap.m_currentUploadHeapIndex;
+                BIOME_ASSERT_ALWAYS_EXEC(AddUploadBuffer(pGpuDevice->m_pDevice.Get(), uploadHeap));
+            }
+        }
+    }
 }
 
 void device::StartFrame(
@@ -504,16 +564,19 @@ void device::EndFrame(
     }
 
     const uint64_t nextFrame = ++pGpuDevice->m_currentFrame;
-    const uint64_t nextAllocatorIndex = nextFrame % (pGpuDevice->m_framesOfLatency + 1);
+    const uint64_t nextResourceIndex = nextFrame % (pGpuDevice->m_framesOfLatency + 1);
 
     CommandBuffer* pCmdBuffer;
     AsType(pCmdBuffer, cmdBufferHdl);
 
-    ID3D12CommandAllocator* pCmdAllocator = pCmdBuffer->m_cmdAllocators[nextAllocatorIndex].Get();
+    ID3D12CommandAllocator* pCmdAllocator = pCmdBuffer->m_cmdAllocators[nextResourceIndex].Get();
     ID3D12GraphicsCommandList* pCmdList = pCmdBuffer->m_pCmdList.Get();
-
     pCmdAllocator->Reset();
     pCmdList->Reset(pCmdAllocator, nullptr);
+
+    UploadHeap& uploadHeap = pGpuDevice->m_UploadHeaps[nextResourceIndex];
+    uploadHeap.m_currentUploadHeapIndex = 0;
+    uploadHeap.m_currentUploadHeapOffset = 0;
 }
 
 GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
@@ -627,24 +690,10 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
     StaticArray<UploadHeap> uploadHeaps(framesOfLatency + 1);
     for (size_t i = 0; i < uploadHeaps.Size(); ++i)
     {
-        ComPtr<ID3D12Heap> uploadHeap;
-        D3D12_HEAP_DESC heapDesc{};
-        heapDesc.SizeInBytes = GpuDevice::UploadHeapByteSize;
-        heapDesc.Properties.Type = D3D12_HEAP_TYPE_UPLOAD;
-        heapDesc.Properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        heapDesc.Properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-        heapDesc.Properties.CreationNodeMask = 0;
-        heapDesc.Properties.VisibleNodeMask = 0;
-        heapDesc.Alignment = 0;
-        heapDesc.Flags = D3D12_HEAP_FLAG_CREATE_NOT_ZEROED;
-
-        if (SUCCEEDED(pDevice->CreateHeap(&heapDesc, IID_PPV_ARGS(uploadHeap.ReleaseAndGetAddressOf()))))
-        {
-            uploadHeaps[i].m_heapByteSize = GpuDevice::UploadHeapByteSize;
-            uploadHeaps[i].m_currentUploadHeapIndex = 0;
-            uploadHeaps[i].m_currentUploadHeapOffset = 0;
-            uploadHeaps[i].m_spUploadHeaps.Add(uploadHeap);
-        }
+        uploadHeaps[i].m_heapByteSize = GpuDevice::UploadHeapByteSize;
+        uploadHeaps[i].m_currentUploadHeapIndex = 0;
+        uploadHeaps[i].m_currentUploadHeapOffset = 0;
+        BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(AddUploadBuffer(pDevice.Get(), uploadHeaps[i])));
     }
 
     pGpuDevice->m_UploadHeaps = std::move(uploadHeaps);
@@ -1045,7 +1094,7 @@ DescriptorHeapHandle device::CreateDescriptorHeap(GpuDeviceHandle /*deviceHdl*/)
     return Handle_NULL;
 }
 
-BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, size_t bufferByteSize)
+BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, uint32_t bufferByteSize)
 {
     BufferHandle bufferHdl = Handle_NULL;
     GpuDevice* pDevice = ToType(deviceHdl);
@@ -1108,26 +1157,40 @@ BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, si
     return ToHandle(pBuffer);
 }
 
-uint8_t* device::MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
+void* device::MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
 {
-    //const uint64_t nextAllocatorIndex = nextFrame % (pGpuDevice->m_framesOfLatency + 1);
-
-    GpuDevice* pDevice = ToType(deviceHdl);
+    GpuDevice* pGpuDevice = ToType(deviceHdl);
     Buffer* pBuffer = ToType(hdl);
 
-    void* pMappedData = nullptr;
-    
-    pBuffer->m_pResource->Map(0, nullptr, &pMappedData);
+    const uint64_t currentFrame = pGpuDevice->m_currentFrame;
+    const uint64_t currentUploadHeapIndex = currentFrame % (pGpuDevice->m_framesOfLatency + 1);
 
-    return static_cast<uint8_t*>(pMappedData);
+    UploadHeap& uploadHeap = pGpuDevice->m_UploadHeaps[currentUploadHeapIndex];
+    EnsureUploadSpace(pGpuDevice, uploadHeap, pBuffer->m_byteSize);
+    ID3D12Resource* pUploadBuffer = uploadHeap.m_spUploadBuffers[uploadHeap.m_currentUploadHeapIndex].Get();
+
+    void* pMappedData = nullptr;
+    BIOME_ASSERT_ALWAYS_EXEC(pUploadBuffer->Map(0, nullptr, &pMappedData));
+
+    uint8_t* pReturnedAddr = static_cast<uint8_t*>(pMappedData) + uploadHeap.m_currentUploadHeapOffset;
+    uploadHeap.m_currentUploadHeapOffset += pBuffer->m_byteSize;
+    
+    return pReturnedAddr;
 }
 
 void device::UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
 {
-    GpuDevice* pDevice = ToType(deviceHdl);
+    GpuDevice* pGpuDevice = ToType(deviceHdl);
     Buffer* pBuffer = ToType(hdl);
 
-    pBuffer->m_pResource->Unmap(0, nullptr);
+    const uint64_t currentFrame = pGpuDevice->m_currentFrame;
+    const uint64_t currentUploadHeapIndex = currentFrame % (pGpuDevice->m_framesOfLatency + 1);
+    const UploadHeap& uploadHeap = pGpuDevice->m_UploadHeaps[currentUploadHeapIndex];
+    ID3D12Resource* pUploadBuffer = uploadHeap.m_spUploadBuffers[uploadHeap.m_currentUploadHeapIndex].Get();
+
+    pUploadBuffer->Unmap(0, nullptr);
+
+    // TODO: copy on Copy Queue.
 }
 
 void device::DestroyDevice(GpuDeviceHandle hdl)
