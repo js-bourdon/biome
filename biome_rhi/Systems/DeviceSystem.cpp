@@ -515,11 +515,18 @@ namespace
 }
 
 void device::StartFrame(
-    [[maybe_unused]] GpuDeviceHandle deviceHdl,
-    [[maybe_unused]] CommandQueueHandle cmdQueueHdl,
+    GpuDeviceHandle deviceHdl,
+    CommandQueueHandle cmdQueueHdl,
     [[maybe_unused]] CommandBufferHandle cmdBufferHdl)
 {
+    GpuDevice* pGpuDevice;
+    AsType(pGpuDevice, deviceHdl);
 
+    ID3D12CommandQueue* pCmdQueue;
+    AsType(pCmdQueue, cmdQueueHdl);
+
+    const uint64_t currentFrame = pGpuDevice->m_currentFrame;
+    BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pCmdQueue->Signal(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
 }
 
 void device::EndFrame(
@@ -628,11 +635,12 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
         return Handle_NULL;
     }
 
-    ComPtr<ID3D12Device> pDevice{};
-    ComPtr<ID3D12DescriptorHeap> pRtvDescriptorHeap{};
-    ComPtr<ID3D12DescriptorHeap> pViewDescriptorHeap{};
-    ComPtr<ID3D12Fence> pFrameFence{};
-    ComPtr<IDXGIDebug> pDebug{};
+    ComPtr<ID3D12Device> pDevice {};
+    ComPtr<ID3D12DescriptorHeap> pRtvDescriptorHeap {};
+    ComPtr<ID3D12DescriptorHeap> pViewDescriptorHeap {};
+    ComPtr<ID3D12Fence> pFrameFence {};
+    ComPtr<ID3D12Fence> pCopyFence {};
+    ComPtr<IDXGIDebug> pDebug {};
 
     if (FAILED(D3D12CreateDevice(
         hardwareAdapter.Get(),
@@ -669,6 +677,11 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
         return Handle_NULL;
     }
 
+    if (FAILED(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(pCopyFence.ReleaseAndGetAddressOf()))))
+    {
+        return Handle_NULL;
+    }
+
     const HANDLE fenceEvent = CreateEvent(
         nullptr,    // Security attributes
         FALSE,      // Manual reset
@@ -679,6 +692,7 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
     pGpuDevice->m_pDevice = pDevice;
     pGpuDevice->m_pRtvDescriptorHeap = pRtvDescriptorHeap;
     pGpuDevice->m_pFrameFence = pFrameFence;
+    pGpuDevice->m_pCopyFence = pCopyFence;
     pGpuDevice->m_fenceEvent = fenceEvent;
     pGpuDevice->m_framesOfLatency = framesOfLatency;
     pGpuDevice->m_rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);

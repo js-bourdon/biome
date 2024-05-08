@@ -30,6 +30,7 @@ namespace biome::rhi
             ComPtr<ID3D12Device>                            m_pDevice { nullptr };
             ComPtr<ID3D12DescriptorHeap>                    m_pRtvDescriptorHeap { nullptr };
             ComPtr<ID3D12Fence>                             m_pFrameFence { nullptr };
+            ComPtr<ID3D12Fence>                             m_pCopyFence { nullptr };
         #ifdef _DEBUG
             ComPtr<IDXGIDebug>                              m_pDebug { nullptr };
         #endif
