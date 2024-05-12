@@ -1,6 +1,7 @@
 #pragma once
 
 #include "biome_rhi/Resources/ResourceHandles.h"
+#include "biome_rhi/Systems/SystemEnums.h"
 #include "biome_core/DataStructures/StaticArray.h"
 #include "biome_core/DataStructures/Vector.h"
 #include "biome_core/Memory/MemoryOffsetAllocator.h"
@@ -98,7 +99,7 @@ namespace biome::rhi
     template<typename Type, typename HandleType>
     inline Type* AsType(const HandleType handle)
     {
-        return reinterpret_cast<Type*>(*reinterpret_cast<uintptr_t*>(&handle));
+        return reinterpret_cast<Type*>(*reinterpret_cast<const uintptr_t*>(&handle));
     }
 
     template<typename PtrType, typename HandleType>
@@ -106,7 +107,7 @@ namespace biome::rhi
     {
         HandleType hdl = {};
         uintptr_t* pHdl = reinterpret_cast<uintptr_t*>(&hdl);
-        *pHdl = reinterpret_cast<uintptr_t>(pPtr);
+        *pHdl = reinterpret_cast<const uintptr_t>(pPtr);
         return hdl;
         
     }

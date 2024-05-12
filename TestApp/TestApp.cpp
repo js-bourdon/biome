@@ -141,7 +141,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         // Perform any upload heap copy before calling StartFrame.
         // Transfer to GPU happens in StartFrame.
 
-        device::StartFrame(deviceHdl, cmdBufferHdl);
+        device::StartFrame(deviceHdl);
 
         const TextureHandle backBufferHdl = device::GetBackBuffer(deviceHdl, swapChainHdl);
 

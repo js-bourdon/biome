@@ -767,9 +767,11 @@ SwapChainHandle device::CreateSwapChain(
     AsType(pGpuDevice, deviceHdl);
 
     const uint32_t backBufferCount = pGpuDevice->m_framesOfLatency + 1;
-    const HWND windowHWND = AsType<HWND>(windowHdl);
-    ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
 
+    HWND windowHWND;
+    AsType(windowHWND, windowHdl);
+
+    ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
     SwapChainHandle swapChainHdl = Handle_NULL;
 
     UINT dxgiFactoryFlags = 0;
