@@ -68,7 +68,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     constexpr uint32_t framesOfLatency = 1;
     const GpuDeviceHandle deviceHdl = device::CreateDevice(framesOfLatency);
-    const CommandQueueHandle cmdQueueHdl = device::GetCommandQueue(deviceHdl, CommandType::Graphics);
     
     // Assets loading
     AssetDatabase* pAssetDb = LoadDatabase("Media/builds/star_trek_danube_class/StartTrek.db");
@@ -99,7 +98,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     device::UnmapBuffer(deviceHdl, vertexBufferHdl);
 
     constexpr uint32_t backBufferCount = 2;
-    const SwapChainHandle swapChainHdl = device::CreateSwapChain(deviceHdl, cmdQueueHdl, hwnd, windowWidth, windowHeight);
+    const SwapChainHandle swapChainHdl = device::CreateSwapChain(deviceHdl, hwnd, windowWidth, windowHeight);
 
     const CommandBufferHandle cmdBufferHdl = device::CreateCommandBuffer(deviceHdl, CommandType::Graphics);
     BIOME_ASSERT(cmdBufferHdl != biome::Handle_NULL);
@@ -142,7 +141,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         // Perform any upload heap copy before calling StartFrame.
         // Transfer to GPU happens in StartFrame.
 
-        device::StartFrame(deviceHdl, cmdQueueHdl, cmdBufferHdl);
+        device::StartFrame(deviceHdl, cmdBufferHdl);
 
         const TextureHandle backBufferHdl = device::GetBackBuffer(deviceHdl, swapChainHdl);
 
@@ -167,11 +166,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         commands::ResourceTransition(cmdBufferHdl, &transition, 1);
 
         commands::CloseCommandBuffer(cmdBufferHdl);
-        device::ExecuteCommandBuffer(cmdQueueHdl, cmdBufferHdl);
+        device::ExecuteCommandBuffer(deviceHdl, cmdBufferHdl);
 
         device::Present(swapChainHdl);
 
-        device::EndFrame(deviceHdl, cmdQueueHdl, cmdBufferHdl);
+        device::EndFrame(deviceHdl);
 
         std::this_thread::sleep_for(100ms);
     }
@@ -180,9 +179,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     device::DestroyGfxPipeline(gfxPipeHdl);
     device::DestroyShaderResourceLayout(rscLayoutHdl);
-    device::DestroyCommandBuffer(cmdBufferHdl);
     device::DestroySwapChain(swapChainHdl);
-    device::DestroyCommandQueue(cmdQueueHdl);
     device::DestroyDevice(deviceHdl);
 
     return 0;

@@ -23,27 +23,6 @@ namespace biome::rhi
             uint32_t                                    m_currentUploadHeapOffset { 0 };
         };
 
-        struct GpuDevice
-        {
-            static constexpr uint32_t                       UploadHeapByteSize = MiB(128);
-
-            ComPtr<ID3D12Device>                            m_pDevice { nullptr };
-            ComPtr<ID3D12DescriptorHeap>                    m_pRtvDescriptorHeap { nullptr };
-            ComPtr<ID3D12Fence>                             m_pFrameFence { nullptr };
-            ComPtr<ID3D12Fence>                             m_pCopyFence { nullptr };
-        #ifdef _DEBUG
-            ComPtr<IDXGIDebug>                              m_pDebug { nullptr };
-        #endif
-            biome::data::StaticArray<CommandQueueHandle>    m_CommandQueues {};
-            biome::data::StaticArray<UploadHeap>            m_UploadHeaps {};
-            DescriptorHeap                                  m_ResourceViewHeap {};
-            uint64_t                                        m_currentFrame { 0 };
-            HANDLE                                          m_fenceEvent {};
-            uint32_t                                        m_rtvDescriptorSize { 0 };
-            uint32_t                                        m_framesOfLatency { 0 };
-            
-        };
-
         struct SwapChain
         {
             ComPtr<IDXGISwapChain1>                 m_pSwapChain { nullptr };
@@ -58,6 +37,7 @@ namespace biome::rhi
 
             AllocatorArray                      m_cmdAllocators {};
             ComPtr<ID3D12GraphicsCommandList>   m_pCmdList { nullptr };
+            CommandType                         m_type {};
         };
 
         struct Resource
@@ -76,6 +56,28 @@ namespace biome::rhi
         {
             uint32_t                    m_byteSize { 0 };
         };
+
+        struct GpuDevice
+        {
+            static constexpr uint32_t                       UploadHeapByteSize = MiB(128);
+
+            ComPtr<ID3D12Device>                            m_pDevice { nullptr };
+            ComPtr<ID3D12DescriptorHeap>                    m_pRtvDescriptorHeap { nullptr };
+            ComPtr<ID3D12Fence>                             m_pFrameFence { nullptr };
+            ComPtr<ID3D12Fence>                             m_pCopyFence { nullptr };
+        #ifdef _DEBUG
+            ComPtr<IDXGIDebug>                              m_pDebug { nullptr };
+        #endif
+            biome::data::StaticArray<CommandQueueHandle>    m_CommandQueues {};
+            biome::data::StaticArray<UploadHeap>            m_UploadHeaps {};
+            biome::data::Vector<CommandBuffer>              m_CommandBuffers {};
+            DescriptorHeap                                  m_ResourceViewHeap {};
+            uint64_t                                        m_currentFrame { 0 };
+            HANDLE                                          m_fenceEvent {};
+            uint32_t                                        m_rtvDescriptorSize { 0 };
+            uint32_t                                        m_framesOfLatency { 0 };
+
+        };
     }
 
     using namespace biome::rhi::resources;
@@ -91,6 +93,22 @@ namespace biome::rhi
     {
         uintptr_t* pHdl = reinterpret_cast<uintptr_t*>(&handle);
         *pHdl = reinterpret_cast<uintptr_t>(pPtr);
+    }
+
+    template<typename Type, typename HandleType>
+    inline Type* AsType(const HandleType handle)
+    {
+        return reinterpret_cast<Type*>(*reinterpret_cast<uintptr_t*>(&handle));
+    }
+
+    template<typename PtrType, typename HandleType>
+    inline HandleType AsHandle(const PtrType pPtr)
+    {
+        HandleType hdl = {};
+        uintptr_t* pHdl = reinterpret_cast<uintptr_t*>(&hdl);
+        *pHdl = reinterpret_cast<uintptr_t>(pPtr);
+        return hdl;
+        
     }
 
     inline GpuDevice* ToType(GpuDeviceHandle hdl)

@@ -21,18 +21,16 @@ namespace biome::rhi
     namespace device
     {
         GpuDeviceHandle             CreateDevice(uint32_t framesOfLatency);
-        CommandQueueHandle          GetCommandQueue(GpuDeviceHandle deviceHdl, CommandType type);
         CommandBufferHandle         CreateCommandBuffer(GpuDeviceHandle deviceHdl, CommandType type);
 
         SwapChainHandle             CreateSwapChain(
                                         GpuDeviceHandle deviceHdl,
-                                        CommandQueueHandle cmdQueueHdl,
                                         WindowHandle windowHdl,
                                         uint32_t pixelWidth,
                                         uint32_t pixelHeight);
 
-        void                        StartFrame(GpuDeviceHandle deviceHdl, CommandQueueHandle cmdQueueHdl, CommandBufferHandle cmdBufferHdl);
-        void                        EndFrame(GpuDeviceHandle deviceHdl, CommandQueueHandle cmdQueueHdl, CommandBufferHandle cmdBufferHdl);
+        void                        StartFrame(GpuDeviceHandle deviceHdl);
+        void                        EndFrame(GpuDeviceHandle deviceHdl);
 
         uint64_t                    GetCurrentFrameIndex(GpuDeviceHandle deviceHdl);
         PixelFormat                 GetSwapChainFormat(SwapChainHandle hdl);
@@ -52,7 +50,6 @@ namespace biome::rhi
 
         void                        DestroyDevice(GpuDeviceHandle hdl);
         void                        DestroyCommandQueue(CommandQueueHandle hdl);
-        void                        DestroyCommandBuffer(CommandBufferHandle cmdBufferHdl);
         void                        DestroySwapChain(SwapChainHandle hdl);
         void                        DestroyShaderResourceLayout(ShaderResourceLayoutHandle hdl);
         void                        DestroyGfxPipeline(GfxPipelineHandle hdl);
@@ -62,7 +59,7 @@ namespace biome::rhi
         void                        SignalFence(FenceHandle fenceHdl);
         void                        GPUWaitOnFence(FenceHandle fenceHdl);
         void                        CPUWaitOnFence(FenceHandle fenceHdl);
-        void                        ExecuteCommandBuffer(CommandQueueHandle cmdQueueHdl, CommandBufferHandle cmdBufferHdl);
+        void                        ExecuteCommandBuffer(GpuDeviceHandle deviceHdl, CommandBufferHandle cmdBufferHdl);
         void                        Present(SwapChainHandle swapChainHdl);
     }
 

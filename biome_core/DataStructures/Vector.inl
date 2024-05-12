@@ -135,3 +135,27 @@ void Vector<ValueType, CleanConstructDelete, AllocatorType>::EnsureCapacity()
         m_pData = pNewArray;
     }
 }
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+ValueType* Vector<ValueType, CleanConstructDelete, AllocatorType>::begin()
+{
+    return m_pData;
+}
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+ValueType* Vector<ValueType, CleanConstructDelete, AllocatorType>::end()
+{
+    return m_pData + m_size;
+}
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+const ValueType* Vector<ValueType, CleanConstructDelete, AllocatorType>::cbegin() const
+{
+    return m_pData;
+}
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+const ValueType* Vector<ValueType, CleanConstructDelete, AllocatorType>::cend() const
+{
+    return m_pData + m_size;
+}

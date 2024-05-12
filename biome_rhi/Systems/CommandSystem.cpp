@@ -26,7 +26,7 @@ namespace
 
     static D3D12_RESOURCE_STATES ToNativeResourceState(ResourceState rscState)
     {
-#define AppendResourceState(biomeName, nativeName) \
+        #define AppendResourceState(biomeName, nativeName) \
             nativeState = core::CombineFlags(nativeState, core::HasFlag(rscState, biomeName) ? nativeName : D3D12_RESOURCE_STATE_COMMON)
 
         D3D12_RESOURCE_STATES nativeState = D3D12_RESOURCE_STATE_COMMON;

@@ -512,33 +512,35 @@ namespace
             }
         }
     }
+
+    static ID3D12CommandQueue* GetCommandQueue(GpuDevice* pGpuDevice, CommandType type)
+    {
+        const uint32_t queueIndex = static_cast<uint32_t>(type);
+        BIOME_ASSERT(queueIndex < pGpuDevice->m_CommandQueues.Size());
+        return AsType<ID3D12CommandQueue>(pGpuDevice->m_CommandQueues[queueIndex]);
+    }
+
+    static void ResetCommandBuffer(GpuDevice* pGpuDevice, CommandBuffer* pCmdBuffer)
+    {
+        ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, pCmdBuffer->m_type);
+        ID3D12CommandList* pCmdList = pCmdBuffer->m_pCmdList.Get();
+        pCmdQueue->ExecuteCommandLists(1, &pCmdList);
+    }
 }
 
-void device::StartFrame(
-    GpuDeviceHandle deviceHdl,
-    CommandQueueHandle cmdQueueHdl,
-    [[maybe_unused]] CommandBufferHandle cmdBufferHdl)
+void device::StartFrame(GpuDeviceHandle deviceHdl)
 {
-    GpuDevice* pGpuDevice;
-    AsType(pGpuDevice, deviceHdl);
-
-    ID3D12CommandQueue* pCmdQueue;
-    AsType(pCmdQueue, cmdQueueHdl);
+    GpuDevice* pGpuDevice = AsType<GpuDevice>(deviceHdl);
+    ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
 
     const uint64_t currentFrame = pGpuDevice->m_currentFrame;
     BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pCmdQueue->Signal(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
 }
 
-void device::EndFrame(
-    GpuDeviceHandle deviceHdl,
-    CommandQueueHandle cmdQueueHdl,
-    CommandBufferHandle cmdBufferHdl)
+void device::EndFrame(GpuDeviceHandle deviceHdl)
 {
-    GpuDevice* pGpuDevice;
-    AsType(pGpuDevice, deviceHdl);
-
-    ID3D12CommandQueue* pCmdQueue;
-    AsType(pCmdQueue, cmdQueueHdl);
+    GpuDevice* pGpuDevice = AsType<GpuDevice>(deviceHdl);
+    ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
 
     const uint64_t currentFrame = pGpuDevice->m_currentFrame;
     BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pCmdQueue->Signal(pGpuDevice->m_pFrameFence.Get(), currentFrame)));
@@ -573,13 +575,13 @@ void device::EndFrame(
     const uint64_t nextFrame = ++pGpuDevice->m_currentFrame;
     const uint64_t nextResourceIndex = nextFrame % (pGpuDevice->m_framesOfLatency + 1);
 
-    CommandBuffer* pCmdBuffer;
-    AsType(pCmdBuffer, cmdBufferHdl);
-
-    ID3D12CommandAllocator* pCmdAllocator = pCmdBuffer->m_cmdAllocators[nextResourceIndex].Get();
-    ID3D12GraphicsCommandList* pCmdList = pCmdBuffer->m_pCmdList.Get();
-    pCmdAllocator->Reset();
-    pCmdList->Reset(pCmdAllocator, nullptr);
+    for (CommandBuffer& cmdBuffer : pGpuDevice->m_CommandBuffers)
+    {
+        ID3D12CommandAllocator* pCmdAllocator = cmdBuffer.m_cmdAllocators[nextResourceIndex].Get();
+        ID3D12GraphicsCommandList* pCmdList = cmdBuffer.m_pCmdList.Get();
+        pCmdAllocator->Reset();
+        pCmdList->Reset(pCmdAllocator, nullptr);
+    }
 
     UploadHeap& uploadHeap = pGpuDevice->m_UploadHeaps[nextResourceIndex];
     uploadHeap.m_currentUploadHeapIndex = 0;
@@ -728,16 +730,6 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
     return deviceHdl;
 }
 
-CommandQueueHandle device::GetCommandQueue(GpuDeviceHandle deviceHdl, CommandType type)
-{
-    GpuDevice* pGpuDevice;
-    AsType(pGpuDevice, deviceHdl);
-
-    const uint32_t queueIndex = static_cast<uint32_t>(type);
-    BIOME_ASSERT(queueIndex < pGpuDevice->m_CommandQueues.Size());
-    return pGpuDevice->m_CommandQueues[queueIndex];
-}
-
 CommandBufferHandle device::CreateCommandBuffer(GpuDeviceHandle deviceHdl, CommandType type)
 {
     GpuDevice* pGpuDevice;
@@ -755,6 +747,7 @@ CommandBufferHandle device::CreateCommandBuffer(GpuDeviceHandle deviceHdl, Comma
         cmdAllocators[i] = CreateCommandAllocator(pDevice, cmdType);
     }
 
+    pCmdBuffer->m_type = type;
     pCmdBuffer->m_pCmdList = CreateCommandList(pDevice, cmdAllocators[0].Get(), cmdType);
     pCmdBuffer->m_cmdAllocators = std::move(cmdAllocators);
 
@@ -766,7 +759,6 @@ CommandBufferHandle device::CreateCommandBuffer(GpuDeviceHandle deviceHdl, Comma
 
 SwapChainHandle device::CreateSwapChain(
     GpuDeviceHandle deviceHdl,
-    CommandQueueHandle cmdQueueHdl,
     WindowHandle windowHdl,
     uint32_t pixelWidth,
     uint32_t pixelHeight)
@@ -775,11 +767,8 @@ SwapChainHandle device::CreateSwapChain(
     AsType(pGpuDevice, deviceHdl);
 
     const uint32_t backBufferCount = pGpuDevice->m_framesOfLatency + 1;
-    ID3D12CommandQueue* pCmdQueue;
-    HWND windowHWND;
-
-    AsType(pCmdQueue, cmdQueueHdl);
-    AsType(windowHWND, windowHdl);
+    const HWND windowHWND = AsType<HWND>(windowHdl);
+    ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
 
     SwapChainHandle swapChainHdl = Handle_NULL;
 
@@ -1234,13 +1223,6 @@ void device::DestroyCommandQueue(CommandQueueHandle hdl)
     pCmdQueue->Release();
 }
 
-void device::DestroyCommandBuffer(CommandBufferHandle cmdBufferHdl)
-{
-    CommandBuffer* pCmdBuffer;
-    AsType(pCmdBuffer, cmdBufferHdl);
-    delete pCmdBuffer;
-}
-
 void device::DestroySwapChain(SwapChainHandle /*hdl*/)
 {
 
@@ -1283,15 +1265,12 @@ void device::CPUWaitOnFence(FenceHandle /*fenceHdl*/)
 
 }
 
-void device::ExecuteCommandBuffer(CommandQueueHandle cmdQueueHdl, CommandBufferHandle cmdBufferHdl)
+void device::ExecuteCommandBuffer(GpuDeviceHandle deviceHdl, CommandBufferHandle cmdBufferHdl)
 {
-    ID3D12CommandQueue* pCmdQueue;
-    AsType(pCmdQueue, cmdQueueHdl);
-
-    CommandBuffer* pCmdBuffer;
-    AsType(pCmdBuffer, cmdBufferHdl);
+    GpuDevice* pGpuDevice = AsType<GpuDevice>(deviceHdl);
+    CommandBuffer* pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
+    ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, pCmdBuffer->m_type);
     ID3D12CommandList* pCmdList = pCmdBuffer->m_pCmdList.Get();
-
     pCmdQueue->ExecuteCommandLists(1, &pCmdList);
 }
 

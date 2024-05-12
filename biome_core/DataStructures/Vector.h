@@ -30,6 +30,11 @@ namespace biome
             template<typename ...T>
             uint32_t            Emplace(T... args);
 
+            ValueType*          begin();
+            ValueType*          end();
+            const ValueType*    cbegin() const;
+            const ValueType*    cend() const;
+
         private:
 
             void                EnsureCapacity();
