@@ -45,14 +45,7 @@ Vector<ValueType, CleanConstructDelete, AllocatorType>::Vector(uint32_t reserved
 template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
 Vector<ValueType, CleanConstructDelete, AllocatorType>::~Vector()
 {
-    if constexpr (CleanConstructDelete)
-    {
-        for (size_t i = 0; i < m_size; ++i)
-        {
-            new(m_pData + i) ValueType();
-        }
-    }
-
+    Clear();
     AllocatorType::Release(m_pData);
 }
 
@@ -130,7 +123,12 @@ void Vector<ValueType, CleanConstructDelete, AllocatorType>::EnsureCapacity()
     {
         m_reservedSize *= 2;
         ValueType* pNewArray = static_cast<ValueType*>(AllocatorType::Allocate(m_reservedSize * sizeof(ValueType)));
-        memcpy(pNewArray, m_pData, m_size * sizeof(ValueType));
+
+        for (size_t i = 0; i < m_size; ++i)
+        {
+            pNewArray[i] = std::move(m_pData[i]);
+        }
+
         AllocatorType::Release(m_pData);
         m_pData = pNewArray;
     }
