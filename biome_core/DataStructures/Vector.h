@@ -18,7 +18,7 @@ namespace biome
             Vector(uint32_t reservedSize, uint32_t size);
             ~Vector();
 
-            uint32_t            Add(ValueType& value);
+            uint32_t            Add(const ValueType& value);
             ValueType&          Remove(uint32_t index);
             ValueType*          Data();
             uint32_t            Size() const { return m_size; }

@@ -88,6 +88,7 @@ const ValueType& StaticArray<ValueType, CleanConstructDelete, AllocatorType>::op
 template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
 void StaticArray<ValueType, CleanConstructDelete, AllocatorType>::operator=(StaticArray<ValueType, CleanConstructDelete, AllocatorType>&& other) noexcept
 {
+    this->~StaticArray();
     m_pData = other.m_pData;
     m_size = other.m_size;
 

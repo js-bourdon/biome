@@ -1,6 +1,7 @@
 #include <pch.h>
 #include "biome_rhi/Systems/DeviceSystem.h"
 #include "biome_rhi/Systems/SystemUtils.h"
+#include "biome_rhi/Systems/CommandSystem.h"
 #include "biome_rhi/Dependencies/d3d12.h"
 #include "biome_rhi/Descriptors/ShaderResourceLayoutDesc.h"
 #include "biome_rhi/Descriptors/PipelineDesc.h"
@@ -13,6 +14,7 @@
 using namespace biome;
 using namespace biome::rhi;
 using namespace biome::rhi::resources;
+using namespace biome::rhi::commands;
 using namespace biome::external;
 
 namespace
@@ -275,137 +277,137 @@ namespace
         }
     }
 
-    static DXGI_FORMAT ToNativeFormat(PixelFormat format)
+    static DXGI_FORMAT ToNativeFormat(Format format)
     {
         switch (format)
         {
-        case PixelFormat::Unknown:
+        case Format::Unknown:
             return DXGI_FORMAT_UNKNOWN;
-        case PixelFormat::R32G32B32A32_FLOAT:
+        case Format::R32G32B32A32_FLOAT:
             return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        case PixelFormat::R32G32B32A32_UINT:
+        case Format::R32G32B32A32_UINT:
             return DXGI_FORMAT_R32G32B32A32_UINT;
-        case PixelFormat::R32G32B32A32_SINT:
+        case Format::R32G32B32A32_SINT:
             return DXGI_FORMAT_R32G32B32A32_SINT;
-        case PixelFormat::R32G32B32_FLOAT:
+        case Format::R32G32B32_FLOAT:
             return DXGI_FORMAT_R32G32B32_FLOAT;
-        case PixelFormat::R32G32B32_UINT:
+        case Format::R32G32B32_UINT:
             return DXGI_FORMAT_R32G32B32_UINT;
-        case PixelFormat::R32G32B32_SINT:
+        case Format::R32G32B32_SINT:
             return DXGI_FORMAT_R32G32B32_SINT;
-        case PixelFormat::R16G16B16A16_FLOAT:
+        case Format::R16G16B16A16_FLOAT:
             return DXGI_FORMAT_R16G16B16A16_FLOAT;
-        case PixelFormat::R16G16B16A16_UNORM:
+        case Format::R16G16B16A16_UNORM:
             return DXGI_FORMAT_R16G16B16A16_UNORM;
-        case PixelFormat::R16G16B16A16_UINT:
+        case Format::R16G16B16A16_UINT:
             return DXGI_FORMAT_R16G16B16A16_UINT;
-        case PixelFormat::R16G16B16A16_SNORM:
+        case Format::R16G16B16A16_SNORM:
             return DXGI_FORMAT_R16G16B16A16_SNORM;
-        case PixelFormat::R16G16B16A16_SINT:
+        case Format::R16G16B16A16_SINT:
             return DXGI_FORMAT_R16G16B16A16_SINT;
-        case PixelFormat::R32G32_FLOAT:
+        case Format::R32G32_FLOAT:
             return DXGI_FORMAT_R32G32_FLOAT;
-        case PixelFormat::R32G32_UINT:
+        case Format::R32G32_UINT:
             return DXGI_FORMAT_R32G32_UINT;
-        case PixelFormat::R32G32_SINT:
+        case Format::R32G32_SINT:
             return DXGI_FORMAT_R32G32_SINT;
-        case PixelFormat::R10G10B10A2_UNORM:
+        case Format::R10G10B10A2_UNORM:
             return DXGI_FORMAT_R10G10B10A2_UNORM;
-        case PixelFormat::R10G10B10A2_UINT:
+        case Format::R10G10B10A2_UINT:
             return DXGI_FORMAT_R10G10B10A2_UINT;
-        case PixelFormat::R11G11B10_FLOAT:
+        case Format::R11G11B10_FLOAT:
             return DXGI_FORMAT_R11G11B10_FLOAT;
-        case PixelFormat::R8G8B8A8_UNORM:
+        case Format::R8G8B8A8_UNORM:
             return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case PixelFormat::R8G8B8A8_UNORM_SRGB:
+        case Format::R8G8B8A8_UNORM_SRGB:
             return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-        case PixelFormat::R8G8B8A8_UINT:
+        case Format::R8G8B8A8_UINT:
             return DXGI_FORMAT_R8G8B8A8_UINT;
-        case PixelFormat::R8G8B8A8_SNORM:
+        case Format::R8G8B8A8_SNORM:
             return DXGI_FORMAT_R8G8B8A8_SNORM;
-        case PixelFormat::R8G8B8A8_SINT:
+        case Format::R8G8B8A8_SINT:
             return DXGI_FORMAT_R8G8B8A8_SINT;
-        case PixelFormat::R16G16_FLOAT:
+        case Format::R16G16_FLOAT:
             return DXGI_FORMAT_R16G16_FLOAT;
-        case PixelFormat::R16G16_UNORM:
+        case Format::R16G16_UNORM:
             return DXGI_FORMAT_R16G16_UNORM;
-        case PixelFormat::R16G16_UINT:
+        case Format::R16G16_UINT:
             return DXGI_FORMAT_R16G16_UINT;
-        case PixelFormat::R16G16_SNORM:
+        case Format::R16G16_SNORM:
             return DXGI_FORMAT_R16G16_SNORM;
-        case PixelFormat::R16G16_SINT:
+        case Format::R16G16_SINT:
             return DXGI_FORMAT_R16G16_SINT;
-        case PixelFormat::D32_FLOAT:
+        case Format::D32_FLOAT:
             return DXGI_FORMAT_D32_FLOAT;
-        case PixelFormat::R32_FLOAT:
+        case Format::R32_FLOAT:
             return DXGI_FORMAT_R32_FLOAT;
-        case PixelFormat::R32_UINT:
+        case Format::R32_UINT:
             return DXGI_FORMAT_R32_UINT;
-        case PixelFormat::R32_SINT:
+        case Format::R32_SINT:
             return DXGI_FORMAT_R32_SINT;
-        case PixelFormat::D24_UNORM_S8_UINT:
+        case Format::D24_UNORM_S8_UINT:
             return DXGI_FORMAT_D24_UNORM_S8_UINT;
-        case PixelFormat::R24_UNORM_X8_TYPELESS:
+        case Format::R24_UNORM_X8_TYPELESS:
             return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-        case PixelFormat::R8G8_UNORM:
+        case Format::R8G8_UNORM:
             return DXGI_FORMAT_R8G8_UNORM;
-        case PixelFormat::R8G8_UINT:
+        case Format::R8G8_UINT:
             return DXGI_FORMAT_R8G8_UINT;
-        case PixelFormat::R8G8_SNORM:
+        case Format::R8G8_SNORM:
             return DXGI_FORMAT_R8G8_SNORM;
-        case PixelFormat::R8G8_SINT:
+        case Format::R8G8_SINT:
             return DXGI_FORMAT_R8G8_SINT;
-        case PixelFormat::R16_FLOAT:
+        case Format::R16_FLOAT:
             return DXGI_FORMAT_R16_FLOAT;
-        case PixelFormat::D16_UNORM:
+        case Format::D16_UNORM:
             return DXGI_FORMAT_D16_UNORM;
-        case PixelFormat::R16_UNORM:
+        case Format::R16_UNORM:
             return DXGI_FORMAT_R16_UNORM;
-        case PixelFormat::R16_UINT:
+        case Format::R16_UINT:
             return DXGI_FORMAT_R16_UINT;
-        case PixelFormat::R16_SNORM:
+        case Format::R16_SNORM:
             return DXGI_FORMAT_R16_SNORM;
-        case PixelFormat::R16_SINT:
+        case Format::R16_SINT:
             return DXGI_FORMAT_R16_SINT;
-        case PixelFormat::R8_UNORM:
+        case Format::R8_UNORM:
             return DXGI_FORMAT_R8_UNORM;
-        case PixelFormat::R8_UINT:
+        case Format::R8_UINT:
             return DXGI_FORMAT_R8_UINT;
-        case PixelFormat::R8_SNORM:
+        case Format::R8_SNORM:
             return DXGI_FORMAT_R8_SNORM;
-        case PixelFormat::R8_SINT:
+        case Format::R8_SINT:
             return DXGI_FORMAT_R8_SINT;
-        case PixelFormat::A8_UNORM:
+        case Format::A8_UNORM:
             return DXGI_FORMAT_A8_UNORM;
-        case PixelFormat::R1_UNORM:
+        case Format::R1_UNORM:
             return DXGI_FORMAT_R1_UNORM;
-        case PixelFormat::BC1_UNORM:
+        case Format::BC1_UNORM:
             return DXGI_FORMAT_BC1_UNORM;
-        case PixelFormat::BC1_UNORM_SRGB:
+        case Format::BC1_UNORM_SRGB:
             return DXGI_FORMAT_BC1_UNORM_SRGB;
-        case PixelFormat::BC2_UNORM:
+        case Format::BC2_UNORM:
             return DXGI_FORMAT_BC2_UNORM;
-        case PixelFormat::BC2_UNORM_SRGB:
+        case Format::BC2_UNORM_SRGB:
             return DXGI_FORMAT_BC2_UNORM_SRGB;
-        case PixelFormat::BC3_UNORM:
+        case Format::BC3_UNORM:
             return DXGI_FORMAT_BC3_UNORM;
-        case PixelFormat::BC3_UNORM_SRGB:
+        case Format::BC3_UNORM_SRGB:
             return DXGI_FORMAT_BC3_UNORM_SRGB;
-        case PixelFormat::BC4_UNORM:
+        case Format::BC4_UNORM:
             return DXGI_FORMAT_BC4_UNORM;
-        case PixelFormat::BC4_SNORM:
+        case Format::BC4_SNORM:
             return DXGI_FORMAT_BC4_SNORM;
-        case PixelFormat::BC5_UNORM:
+        case Format::BC5_UNORM:
             return DXGI_FORMAT_BC5_UNORM;
-        case PixelFormat::BC5_SNORM:
+        case Format::BC5_SNORM:
             return DXGI_FORMAT_BC5_SNORM;
-        case PixelFormat::B5G6R5_UNORM:
+        case Format::B5G6R5_UNORM:
             return DXGI_FORMAT_B5G6R5_UNORM;
-        case PixelFormat::B5G5R5A1_UNORM:
+        case Format::B5G5R5A1_UNORM:
             return DXGI_FORMAT_B5G5R5A1_UNORM;
-        case PixelFormat::B8G8R8A8_UNORM:
+        case Format::B8G8R8A8_UNORM:
             return DXGI_FORMAT_B8G8R8A8_UNORM;
-        case PixelFormat::B8G8R8A8_UNORM_SRGB:
+        case Format::B8G8R8A8_UNORM_SRGB:
             return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
         default:
             BIOME_FAIL();
@@ -503,12 +505,13 @@ namespace
         if (freeByteSize < byteSize)
         {
             uploadHeap.m_currentUploadHeapOffset = 0;
+            ++uploadHeap.m_currentUploadHeapIndex;
+
             const size_t bufferCount = uploadHeap.m_spUploadBuffers.Size();
-            if (uploadHeap.m_currentUploadHeapIndex == bufferCount - 1)
+            if (uploadHeap.m_currentUploadHeapIndex >= bufferCount)
             {
                 // We're out of space, we need another buffer
-                ++uploadHeap.m_currentUploadHeapIndex;
-                BIOME_ASSERT_ALWAYS_EXEC(AddUploadBuffer(pGpuDevice->m_pDevice.Get(), uploadHeap));
+                BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(AddUploadBuffer(pGpuDevice->m_pDevice.Get(), uploadHeap)));
             }
         }
     }
@@ -526,15 +529,40 @@ namespace
         ID3D12CommandList* pCmdList = pCmdBuffer->m_pCmdList.Get();
         pCmdQueue->ExecuteCommandLists(1, &pCmdList);
     }
+
+    static void FillCommandBuffer(GpuDevice* const pGpuDevice, const CommandType type, CommandBuffer& cmdBuffer)
+    {
+        ID3D12Device* pDevice = pGpuDevice->m_pDevice.Get();
+        D3D12_COMMAND_LIST_TYPE cmdType = ToNativeCmdType(type);
+
+        const uint32_t allocatorCount = pGpuDevice->m_framesOfLatency + 1;
+        CommandBuffer::AllocatorArray cmdAllocators(allocatorCount);
+
+        for (uint32_t i = 0; i < allocatorCount; ++i)
+        {
+            cmdAllocators[i] = CreateCommandAllocator(pDevice, cmdType);
+        }
+
+        cmdBuffer.m_type = type;
+        cmdBuffer.m_pCmdList = CreateCommandList(pDevice, cmdAllocators[0].Get(), cmdType);
+        cmdBuffer.m_cmdAllocators = std::move(cmdAllocators);
+    }
 }
 
 void device::StartFrame(GpuDeviceHandle deviceHdl)
 {
-    GpuDevice* pGpuDevice = AsType<GpuDevice>(deviceHdl);
-    ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
+    GpuDevice* const pGpuDevice = AsType<GpuDevice>(deviceHdl);
+    const CommandBufferHandle cmdBufferHdl = AsHandle<CommandBufferHandle>(&pGpuDevice->m_DmaCommandBuffer);
+
+    CloseCommandBuffer(cmdBufferHdl);
+    ExecuteCommandBuffer(deviceHdl, cmdBufferHdl);
+
+    ID3D12CommandQueue* pCopyCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Copy);
+    ID3D12CommandQueue* pGfxCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
 
     const uint64_t currentFrame = pGpuDevice->m_currentFrame;
-    BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pCmdQueue->Signal(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
+    BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pCopyCmdQueue->Signal(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
+    BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pGfxCmdQueue->Wait(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
 }
 
 void device::EndFrame(GpuDeviceHandle deviceHdl)
@@ -575,13 +603,18 @@ void device::EndFrame(GpuDeviceHandle deviceHdl)
     const uint64_t nextFrame = ++pGpuDevice->m_currentFrame;
     const uint64_t nextResourceIndex = nextFrame % (pGpuDevice->m_framesOfLatency + 1);
 
-    for (CommandBuffer& cmdBuffer : pGpuDevice->m_CommandBuffers)
+    for (CommandBuffer* pCmdBuffer : pGpuDevice->m_CommandBuffers)
     {
-        ID3D12CommandAllocator* pCmdAllocator = cmdBuffer.m_cmdAllocators[nextResourceIndex].Get();
-        ID3D12GraphicsCommandList* pCmdList = cmdBuffer.m_pCmdList.Get();
+        ID3D12CommandAllocator* pCmdAllocator = pCmdBuffer->m_cmdAllocators[nextResourceIndex].Get();
+        ID3D12GraphicsCommandList* pCmdList = pCmdBuffer->m_pCmdList.Get();
         pCmdAllocator->Reset();
         pCmdList->Reset(pCmdAllocator, nullptr);
     }
+
+    ID3D12CommandAllocator* pCmdAllocator = pGpuDevice->m_DmaCommandBuffer.m_cmdAllocators[nextResourceIndex].Get();
+    ID3D12GraphicsCommandList* pCmdList = pGpuDevice->m_DmaCommandBuffer.m_pCmdList.Get();
+    pCmdAllocator->Reset();
+    pCmdList->Reset(pCmdAllocator, nullptr);
 
     UploadHeap& uploadHeap = pGpuDevice->m_UploadHeaps[nextResourceIndex];
     uploadHeap.m_currentUploadHeapIndex = 0;
@@ -725,6 +758,8 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
 
     pGpuDevice->m_CommandQueues = std::move(commandQueues);
 
+    FillCommandBuffer(pGpuDevice, CommandType::Copy, pGpuDevice->m_DmaCommandBuffer);
+
     AsHandle(pGpuDevice, deviceHdl);
 
     return deviceHdl;
@@ -734,27 +769,13 @@ CommandBufferHandle device::CreateCommandBuffer(GpuDeviceHandle deviceHdl, Comma
 {
     GpuDevice* pGpuDevice;
     AsType(pGpuDevice, deviceHdl);
-    ID3D12Device* pDevice = pGpuDevice->m_pDevice.Get();
-    D3D12_COMMAND_LIST_TYPE cmdType = ToNativeCmdType(type);
 
     CommandBuffer* pCmdBuffer = new CommandBuffer();
+    FillCommandBuffer(pGpuDevice, type, *pCmdBuffer);
 
-    const uint32_t allocatorCount = pGpuDevice->m_framesOfLatency + 1;
-    CommandBuffer::AllocatorArray cmdAllocators(allocatorCount);
+    pGpuDevice->m_CommandBuffers.Add(pCmdBuffer);
 
-    for (uint32_t i = 0; i < allocatorCount; ++i)
-    {
-        cmdAllocators[i] = CreateCommandAllocator(pDevice, cmdType);
-    }
-
-    pCmdBuffer->m_type = type;
-    pCmdBuffer->m_pCmdList = CreateCommandList(pDevice, cmdAllocators[0].Get(), cmdType);
-    pCmdBuffer->m_cmdAllocators = std::move(cmdAllocators);
-
-    CommandBufferHandle cmdBufferHdl;
-    AsHandle(pCmdBuffer, cmdBufferHdl);
-
-    return cmdBufferHdl;
+    return AsHandle<CommandBufferHandle>(pCmdBuffer);
 }
 
 SwapChainHandle device::CreateSwapChain(
@@ -853,9 +874,9 @@ uint64_t device::GetCurrentFrameIndex(GpuDeviceHandle deviceHdl)
     return pGpuDevice->m_currentFrame;
 }
 
-PixelFormat device::GetSwapChainFormat(SwapChainHandle /*hdl*/)
+Format device::GetSwapChainFormat(SwapChainHandle /*hdl*/)
 {
-    return PixelFormat::R8G8B8A8_UNORM;
+    return Format::R8G8B8A8_UNORM;
 }
 
 TextureHandle device::GetBackBuffer(GpuDeviceHandle deviceHdl, SwapChainHandle hdl)
@@ -1069,6 +1090,8 @@ GfxPipelineHandle device::CreateGraphicsPipeline(GpuDeviceHandle deviceHdl, cons
         D3D12_INPUT_ELEMENT_DESC& d3dElement = d3dElements[elementIndex];
         d3dElement.InputSlot = element.Slot;
         d3dElement.SemanticName = ToNativeInputSemanticName(element.Semantic);
+        d3dElement.SemanticIndex = element.SemanticIndex;
+        d3dElement.Format = ToNativeFormat(element.Format);
     }
 
     d3dDesc.InputLayout.pInputElementDescs = d3dElements.Data();
@@ -1099,7 +1122,12 @@ DescriptorHeapHandle device::CreateDescriptorHeap(GpuDeviceHandle /*deviceHdl*/)
     return Handle_NULL;
 }
 
-BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, uint32_t bufferByteSize)
+BufferHandle device::CreateBuffer(
+    const GpuDeviceHandle deviceHdl,
+    const BufferType type,
+    const uint32_t bufferByteSize,
+    const uint32_t stride,
+    const Format format)
 {
     BufferHandle bufferHdl = Handle_NULL;
     GpuDevice* pDevice = ToType(deviceHdl);
@@ -1157,6 +1185,8 @@ BufferHandle device::CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, ui
     }
 
     spBuffer->m_byteSize = bufferByteSize;
+    spBuffer->m_format = format;
+    spBuffer->m_stride = stride;
 
     Buffer* pBuffer = spBuffer.release();
     return ToHandle(pBuffer);
@@ -1174,8 +1204,11 @@ void* device::MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
     EnsureUploadSpace(pGpuDevice, uploadHeap, pBuffer->m_byteSize);
     ID3D12Resource* pUploadBuffer = uploadHeap.m_spUploadBuffers[uploadHeap.m_currentUploadHeapIndex].Get();
 
+    pBuffer->m_currentUploadHeap = pUploadBuffer;
+    pBuffer->m_currentUploadHeapOffset = uploadHeap.m_currentUploadHeapOffset;
+
     void* pMappedData = nullptr;
-    BIOME_ASSERT_ALWAYS_EXEC(pUploadBuffer->Map(0, nullptr, &pMappedData));
+    BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pUploadBuffer->Map(0, nullptr, &pMappedData)));
 
     uint8_t* pReturnedAddr = static_cast<uint8_t*>(pMappedData) + uploadHeap.m_currentUploadHeapOffset;
     uploadHeap.m_currentUploadHeapOffset += pBuffer->m_byteSize;
@@ -1188,14 +1221,19 @@ void device::UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
     GpuDevice* pGpuDevice = ToType(deviceHdl);
     Buffer* pBuffer = ToType(hdl);
 
-    const uint64_t currentFrame = pGpuDevice->m_currentFrame;
-    const uint64_t currentUploadHeapIndex = currentFrame % (pGpuDevice->m_framesOfLatency + 1);
-    const UploadHeap& uploadHeap = pGpuDevice->m_UploadHeaps[currentUploadHeapIndex];
-    ID3D12Resource* pUploadBuffer = uploadHeap.m_spUploadBuffers[uploadHeap.m_currentUploadHeapIndex].Get();
+    pBuffer->m_currentUploadHeap->Unmap(0, nullptr);
 
-    pUploadBuffer->Unmap(0, nullptr);
+    constexpr uint32_t dstOffset = 0;
 
-    // TODO: copy on Copy Queue.
+    pGpuDevice->m_DmaCommandBuffer.m_pCmdList->CopyBufferRegion(
+        pBuffer->m_pResource.Get(),
+        dstOffset, 
+        pBuffer->m_currentUploadHeap.Get(),
+        pBuffer->m_currentUploadHeapOffset, 
+        pBuffer->m_byteSize);
+
+    pBuffer->m_currentUploadHeap.Reset();
+    pBuffer->m_currentUploadHeapOffset = 0;
 }
 
 void device::DestroyDevice(GpuDeviceHandle hdl)
@@ -1203,6 +1241,13 @@ void device::DestroyDevice(GpuDeviceHandle hdl)
     GpuDevice* pDevice;
     AsType(pDevice, hdl);
     CloseHandle(pDevice->m_fenceEvent);
+
+    for (CommandBuffer* pCmdBuffer : pDevice->m_CommandBuffers)
+    {
+        delete pCmdBuffer;
+    }
+
+    pDevice->m_CommandBuffers.Clear();
 
 #ifdef _DEBUG
     ComPtr<IDXGIDebug> pDebug = pDevice->m_pDebug;
@@ -1269,10 +1314,10 @@ void device::CPUWaitOnFence(FenceHandle /*fenceHdl*/)
 
 void device::ExecuteCommandBuffer(GpuDeviceHandle deviceHdl, CommandBufferHandle cmdBufferHdl)
 {
-    GpuDevice* pGpuDevice = AsType<GpuDevice>(deviceHdl);
-    CommandBuffer* pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
-    ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, pCmdBuffer->m_type);
-    ID3D12CommandList* pCmdList = pCmdBuffer->m_pCmdList.Get();
+    GpuDevice* const pGpuDevice = AsType<GpuDevice>(deviceHdl);
+    CommandBuffer* const pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
+    ID3D12CommandQueue* const pCmdQueue = GetCommandQueue(pGpuDevice, pCmdBuffer->m_type);
+    ID3D12CommandList* const pCmdList = pCmdBuffer->m_pCmdList.Get();
     pCmdQueue->ExecuteCommandLists(1, &pCmdList);
 }
 

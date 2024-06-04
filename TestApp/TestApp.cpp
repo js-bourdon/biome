@@ -20,6 +20,10 @@
 #include "biome_rhi/Descriptors/Viewport.h"
 #include "biome_rhi/Descriptors/Rectangle.h"
 
+#ifdef _DEBUG
+    #include <pix3.h>
+#endif
+
 using namespace biome::rhi;
 using namespace biome::memory;
 using namespace biome::threading;
@@ -46,6 +50,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
+
+    //LoadLibrary(L"..\\packages\\WinPixEventRuntime.1.0.240308001\\bin\\x64\\WinPixEventRuntime.dll");
 
     BIOME_ASSERT_ALWAYS_EXEC(ThreadHeapAllocator::Initialize(GiB(1), MiB(100)));
 
@@ -85,14 +91,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     const StaticArray<uint8_t> buffers = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Buffers.bin");
 
-    const BufferHandle indexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Index, static_cast<uint32_t>(indexBuffer.m_byteSize));
-    const BufferHandle vertexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Vertex, static_cast<uint32_t>(vertexBuffer.m_byteSize));
+    const BufferHandle indexBufferHdl = 
+        device::CreateBuffer(deviceHdl, BufferType::Index, static_cast<uint32_t>(indexBuffer.m_byteSize), 4u, Format::R32_UINT);
+    const BufferHandle vertexBufferHdl = 
+        device::CreateBuffer(deviceHdl, BufferType::Vertex, static_cast<uint32_t>(vertexBuffer.m_byteSize), 12u, Format::Unknown);
 
     void* pIndexBufferData = device::MapBuffer(deviceHdl, indexBufferHdl);
     void* pVertexBufferData = device::MapBuffer(deviceHdl, vertexBufferHdl);
 
     memcpy(pIndexBufferData, buffers.Data() + indexBuffer.m_byteOffset, indexBuffer.m_byteSize);
     memcpy(pVertexBufferData, buffers.Data() + vertexBuffer.m_byteOffset, vertexBuffer.m_byteSize);
+
+    //static bool pix_capture = true;
+    //PIXBeginCapture(PIX_CAPTURE_GPU, nullptr);
 
     device::UnmapBuffer(deviceHdl, indexBufferHdl);
     device::UnmapBuffer(deviceHdl, vertexBufferHdl);
@@ -107,8 +118,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     BIOME_ASSERT(rscLayoutHdl != biome::Handle_NULL);
 
     // TODO: Make actual handles!!!
-    ShaderHandle vertexShader = device::CreateShader(deviceHdl, "Shaders/bin/fullscreen_vs.cso");
-    ShaderHandle pixelShader = device::CreateShader(deviceHdl, "Shaders/bin/fullscreen_ps.cso");
+    //ShaderHandle vertexShader = device::CreateShader(deviceHdl, "Shaders/bin/fullscreen_vs.cso");
+    ShaderHandle vertexShader = device::CreateShader(deviceHdl, "Shaders/bin/basic_vs.cso");
+    //ShaderHandle pixelShader = device::CreateShader(deviceHdl, "Shaders/bin/fullscreen_ps.cso");
+    ShaderHandle pixelShader = device::CreateShader(deviceHdl, "Shaders/bin/basic_ps.cso");
 
     descriptors::GfxPipelineDesc pipelineDesc{};
     pipelineDesc.ResourceLayout = rscLayoutHdl;
@@ -118,6 +131,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     pipelineDesc.RenderTargetCount = 1;
     pipelineDesc.BlendState.IsEnabled = false;
     pipelineDesc.RasterizerState.DepthClip = false;
+
+    pipelineDesc.InputLayout.Elements = StaticArray<InputLayoutElement>
+    {
+        InputLayoutElement
+        {
+            InputLayoutSemantic::Position,
+            0, // SemanticIndex;
+            0, // Slot;
+            biome::rhi::descriptors::Format::R32G32B32_FLOAT
+        } 
+    };
 
     const GfxPipelineHandle gfxPipeHdl = device::CreateGraphicsPipeline(deviceHdl, pipelineDesc);
     BIOME_ASSERT(gfxPipeHdl != biome::Handle_NULL);
@@ -138,10 +162,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     while (!biome::rhi::events::PumpMessages())
     {
-        // Perform any upload heap copy before calling StartFrame.
+        // Perform any copy operation before StartFrame.
         // Transfer to GPU happens in StartFrame.
 
         device::StartFrame(deviceHdl);
+
+        //if (pix_capture)
+        //{
+        //    PIXEndCapture(FALSE);
+        //    pix_capture = false;
+        //}
 
         const TextureHandle backBufferHdl = device::GetBackBuffer(deviceHdl, swapChainHdl);
 
@@ -157,9 +187,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         transition.m_after = ResourceState::RenderTarget;
         commands::ResourceTransition(cmdBufferHdl, &transition, 1);
 
+        commands::SetIndexBuffer(cmdBufferHdl, indexBufferHdl);
+        commands::SetVertexBuffers(cmdBufferHdl, 0, 1, &vertexBufferHdl);
+
         commands::ClearRenderTarget(cmdBufferHdl, backBufferHdl, { 0.f, 0.5f, 0.f ,0.f });
         commands::OMSetRenderTargets(cmdBufferHdl, 1, &backBufferHdl, nullptr);
-        commands::DrawInstanced(cmdBufferHdl, 3, 1, 0, 0);
+        commands::DrawIndexedInstanced(cmdBufferHdl, static_cast<uint32_t>(indexBuffer.m_byteSize >> 2u), 1u, 0u, 0u, 0u);
 
         transition.m_before = ResourceState::RenderTarget;
         transition.m_after = ResourceState::Present;

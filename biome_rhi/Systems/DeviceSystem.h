@@ -8,7 +8,7 @@ namespace biome::rhi::descriptors
     struct ShaderResourceLayoutDesc;
     struct GfxPipelineDesc;
     struct ComputePipelineDesc;
-    enum class PixelFormat;
+    enum class Format;
 }
 
 using namespace biome::rhi::descriptors;
@@ -33,7 +33,7 @@ namespace biome::rhi
         void                        EndFrame(GpuDeviceHandle deviceHdl);
 
         uint64_t                    GetCurrentFrameIndex(GpuDeviceHandle deviceHdl);
-        PixelFormat                 GetSwapChainFormat(SwapChainHandle hdl);
+        Format                      GetSwapChainFormat(SwapChainHandle hdl);
         TextureHandle               GetBackBuffer(GpuDeviceHandle deviceHdl, SwapChainHandle hdl);
 
         ShaderHandle                CreateShader(GpuDeviceHandle deviceHdl, const char* pFilePath);
@@ -43,7 +43,12 @@ namespace biome::rhi
         ComputePipelineHandle       CreateComputePipeline(GpuDeviceHandle deviceHdl, const ComputePipelineDesc& desc);
         DescriptorHeapHandle        CreateDescriptorHeap(GpuDeviceHandle deviceHdl);
 
-        BufferHandle                CreateBuffer(GpuDeviceHandle deviceHdl, BufferType type, uint32_t bufferByteSize);
+        BufferHandle                CreateBuffer(
+                                        const GpuDeviceHandle deviceHdl, 
+                                        const BufferType type, 
+                                        const uint32_t bufferByteSize, 
+                                        const uint32_t stride, 
+                                        const Format format);
 
         void*                       MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
         void                        UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);

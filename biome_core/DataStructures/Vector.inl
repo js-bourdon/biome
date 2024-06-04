@@ -2,6 +2,7 @@
 
 #include "Vector.h"
 #include <cstdint>
+#include <algorithm>
 #include "biome_core/Core/Defines.h"
 
 using namespace biome::data;
@@ -50,7 +51,7 @@ Vector<ValueType, CleanConstructDelete, AllocatorType>::~Vector()
 }
 
 template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
-uint32_t Vector<ValueType, CleanConstructDelete, AllocatorType>::Add(ValueType& value)
+uint32_t Vector<ValueType, CleanConstructDelete, AllocatorType>::Add(const ValueType& value)
 {
     EnsureCapacity();
     m_pData[m_size] = value;
@@ -110,7 +111,7 @@ template<typename ...T>
 uint32_t Vector<ValueType, CleanConstructDelete, AllocatorType>::Emplace(T... args)
 {
     EnsureCapacity();
-    new (m_pData + m_size) ValueType(args...);
+    new (m_pData + m_size) ValueType(std::forward<T>(args)...);
 
     const uint32_t index = m_size++;
     return index;
@@ -121,8 +122,16 @@ void Vector<ValueType, CleanConstructDelete, AllocatorType>::EnsureCapacity()
 {
     if (m_size + 1 > m_reservedSize)
     {
-        m_reservedSize *= 2;
+        m_reservedSize = std::max(m_reservedSize, 2u) * 2;
         ValueType* pNewArray = static_cast<ValueType*>(AllocatorType::Allocate(m_reservedSize * sizeof(ValueType)));
+
+        if constexpr (CleanConstructDelete)
+        {
+            for (uint32_t i = 0; i < m_reservedSize; ++i)
+            {
+                new (pNewArray + i) ValueType {};
+            }
+        }
 
         for (size_t i = 0; i < m_size; ++i)
         {

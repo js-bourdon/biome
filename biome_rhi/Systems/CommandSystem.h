@@ -76,5 +76,14 @@ namespace biome::rhi
         };
 
         void ResourceTransition(CommandBufferHandle cmdBufferHdl, const TextureStateTransition* transitions, uint32_t transitionCount);
+
+        // Copy
+        void CopyBuffer(
+            const CommandBufferHandle cmdBufferHdl, 
+            const BufferHandle srcHdl, 
+            const BufferHandle dstHdl, 
+            const uint32_t srcOffset, 
+            const uint32_t dstOffset, 
+            const uint32_t byteSize);
     }
 }

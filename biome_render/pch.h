@@ -12,6 +12,8 @@
 
 #include <vector>
 
+#include <DirectXMath.h>
+
 #include "biome_core/Math/Math.h"
 #include "biome_core/DataStructures/Vector.h"
 #include "biome_rhi/Resources/ResourceHandles.h"

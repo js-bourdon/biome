@@ -38,7 +38,7 @@
     <ClInclude Include="pch.h">
       <Filter>pch</Filter>
     </ClInclude>
-    <ClInclude Include="Descriptors\PixelFormats.h">
+    <ClInclude Include="Descriptors\Formats.h">
       <Filter>src\Descriptors</Filter>
     </ClInclude>
     <ClInclude Include="Descriptors\ResourceUsage.h">
@@ -136,5 +136,8 @@
     <ClCompile Include="Systems\CommandSystem.cpp">
       <Filter>src\Systems</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

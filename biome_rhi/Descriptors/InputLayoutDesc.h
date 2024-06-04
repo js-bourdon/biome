@@ -20,8 +20,10 @@ namespace biome::rhi
 
         struct InputLayoutElement
         {
-            InputLayoutSemantic Semantic;
-            uint32_t            Slot;
+            InputLayoutSemantic             Semantic;
+            uint32_t                        SemanticIndex;
+            uint32_t                        Slot;
+            biome::rhi::descriptors::Format Format;
         };
 
         struct InputLayoutDesc

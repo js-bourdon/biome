@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "PixelFormats.h"
+#include "Formats.h"
 #include "ResourceUsage.h"
 
 namespace biome::rhi
@@ -27,7 +27,7 @@ namespace biome::rhi
         {
             const char* DebugName { nullptr };
             TextureType Type {};
-            PixelFormat Format {};
+            Format Format {};
             ResourceUsage Usage {};
             TextureBindFlags BindFlags {};
             uint32_t Width { 0 };

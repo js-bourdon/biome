@@ -48,5 +48,5 @@ StaticArray<uint8_t, false, AllocatorType> biome::filesystem::ReadFileContent(co
         return content;
     }
 
-    return StaticArray<uint8_t, false, AllocatorType>(0);
+    return StaticArray<uint8_t, false, AllocatorType>(static_cast<uint8_t>(0));
 }

@@ -4,7 +4,7 @@
 #include "biome_rhi/Descriptors/BlendStateDesc.h"
 #include "biome_rhi/Descriptors/DepthStencilStateDesc.h"
 #include "biome_rhi/Descriptors/RasterizerStateDesc.h"
-#include "biome_rhi/Descriptors/PixelFormats.h"
+#include "biome_rhi/Descriptors/Formats.h"
 #include "biome_rhi/Resources/ResourceHandles.h"
 
 namespace biome::rhi
@@ -22,8 +22,8 @@ namespace biome::rhi
             BlendStateDesc              BlendState {};
             DepthStencilStateDesc       DepthStencilState {};
             RasterizerStateDesc         RasterizerState {};
-            PixelFormat                 RenderTargetFormats[s_OMMaxRenderTargetCount] {};
-            PixelFormat                 DepthFormat {};
+            Format                 RenderTargetFormats[s_OMMaxRenderTargetCount] {};
+            Format                 DepthFormat {};
             uint32_t                    RenderTargetCount { 0 };
         };
 

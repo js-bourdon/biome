@@ -2,6 +2,7 @@
 
 #include "biome_rhi/Resources/ResourceHandles.h"
 #include "biome_rhi/Systems/SystemEnums.h"
+#include "biome_rhi/Descriptors/Formats.h"
 #include "biome_core/DataStructures/StaticArray.h"
 #include "biome_core/DataStructures/Vector.h"
 #include "biome_core/Memory/MemoryOffsetAllocator.h"
@@ -55,7 +56,11 @@ namespace biome::rhi
 
         struct Buffer : public Resource
         {
-            uint32_t                    m_byteSize { 0 };
+            ComPtr<ID3D12Resource>          m_currentUploadHeap {};
+            uint32_t                        m_currentUploadHeapOffset { 0 };
+            uint32_t                        m_byteSize { 0 };
+            uint32_t                        m_stride { 0 };
+            biome::rhi::descriptors::Format m_format { biome::rhi::descriptors::Format::Unknown };
         };
 
         struct GpuDevice
@@ -71,8 +76,9 @@ namespace biome::rhi
         #endif
             biome::data::StaticArray<CommandQueueHandle>    m_CommandQueues {};
             biome::data::StaticArray<UploadHeap>            m_UploadHeaps {};
-            biome::data::Vector<CommandBuffer>              m_CommandBuffers {};
+            biome::data::Vector<CommandBuffer*>             m_CommandBuffers {};
             DescriptorHeap                                  m_ResourceViewHeap {};
+            CommandBuffer                                   m_DmaCommandBuffer {};
             uint64_t                                        m_currentFrame { 0 };
             HANDLE                                          m_fenceEvent {};
             uint32_t                                        m_rtvDescriptorSize { 0 };
@@ -102,7 +108,7 @@ namespace biome::rhi
         return reinterpret_cast<Type*>(*reinterpret_cast<const uintptr_t*>(&handle));
     }
 
-    template<typename PtrType, typename HandleType>
+    template<typename HandleType, typename PtrType>
     inline HandleType AsHandle(const PtrType pPtr)
     {
         HandleType hdl = {};

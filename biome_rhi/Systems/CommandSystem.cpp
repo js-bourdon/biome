@@ -140,7 +140,8 @@ void commands::DrawIndexedInstanced(
     uint32_t baseVertex,
     uint32_t startInstance)
 {
-
+    CommandBuffer* const pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
+    pCmdBuffer->m_pCmdList->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndex, baseVertex, startInstance);
 }
 
 
@@ -162,7 +163,14 @@ void commands::ClearRenderTarget(CommandBufferHandle cmdBufferHdl, TextureHandle
 
 void commands::SetIndexBuffer(CommandBufferHandle cmdBufferHdl, BufferHandle indexBufferHdl)
 {
+    CommandBuffer* const pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
+    Buffer* const pIndexBuffer = AsType<Buffer>(indexBufferHdl);
 
+    D3D12_INDEX_BUFFER_VIEW ibvDesc = {};
+    ibvDesc.BufferLocation = pIndexBuffer->m_pResource->GetGPUVirtualAddress();
+    ibvDesc.SizeInBytes = pIndexBuffer->m_byteSize;
+    ibvDesc.Format = DXGI_FORMAT_R32_UINT;
+    pCmdBuffer->m_pCmdList->IASetIndexBuffer(&ibvDesc);
 }
 
 void commands::SetPrimitiveTopology(CommandBufferHandle cmdBufferHdl, PrimitiveTopology topology)
@@ -180,7 +188,22 @@ void commands::SetVertexBuffers(
     uint32_t bufferCount,
     const BufferHandle* pVertexBufferHdls)
 {
+    CommandBuffer* const pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
 
+    D3D12_VERTEX_BUFFER_VIEW vbv[D3D12_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT] = {};
+    BIOME_ASSERT(bufferCount <= D3D12_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT);
+
+    for (uint32_t i = 0; i < bufferCount; ++i)
+    {
+        const uint32_t slotIndex = startSlot + i;
+        Buffer* const pVertexBuffer = AsType<Buffer>(pVertexBufferHdls[i]);
+
+        vbv[i].BufferLocation = pVertexBuffer->m_pResource->GetGPUVirtualAddress();
+        vbv[i].SizeInBytes = pVertexBuffer->m_byteSize;
+        vbv[i].StrideInBytes = pVertexBuffer->m_stride;
+    }
+
+    pCmdBuffer->m_pCmdList->IASetVertexBuffers(startSlot, bufferCount, vbv);
 }
 
 void commands::OMSetBlendFactor(CommandBufferHandle cmdBufferHdl, const float* pBlendfactors)
@@ -290,4 +313,18 @@ void commands::ResourceTransition(CommandBufferHandle cmdBufferHdl, const Textur
     }
 
     pCmdBuffer->m_pCmdList->ResourceBarrier(transitionCount, pBarriers);
+}
+
+void commands::CopyBuffer(
+    const CommandBufferHandle cmdBufferHdl,
+    const BufferHandle srcHdl,
+    const BufferHandle dstHdl,
+    const uint32_t srcOffset,
+    const uint32_t dstOffset,
+    const uint32_t byteSize)
+{
+    CommandBuffer* pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
+    Buffer* pSrcBuffer = AsType<Buffer>(srcHdl);
+    Buffer* pDstBuffer = AsType<Buffer>(dstHdl);
+    pCmdBuffer->m_pCmdList->CopyBufferRegion(pDstBuffer->m_pResource.Get(), dstOffset, pSrcBuffer->m_pResource.Get(), srcOffset, byteSize);
 }
