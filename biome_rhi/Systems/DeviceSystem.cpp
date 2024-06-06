@@ -6,6 +6,7 @@
 #include "biome_rhi/Descriptors/ShaderResourceLayoutDesc.h"
 #include "biome_rhi/Descriptors/PipelineDesc.h"
 #include "biome_rhi/Resources/Resources.h"
+#include "biome_rhi/Systems/SystemUtils.h"
 #include "biome_core/DataStructures/Vector.h"
 #include "biome_core/Memory/StackAllocator.h"
 #include "biome_core/FileSystem/FileSystem.h"
@@ -551,18 +552,7 @@ namespace
 
 void device::StartFrame(GpuDeviceHandle deviceHdl)
 {
-    GpuDevice* const pGpuDevice = AsType<GpuDevice>(deviceHdl);
-    const CommandBufferHandle cmdBufferHdl = AsHandle<CommandBufferHandle>(&pGpuDevice->m_DmaCommandBuffer);
-
-    CloseCommandBuffer(cmdBufferHdl);
-    ExecuteCommandBuffer(deviceHdl, cmdBufferHdl);
-
-    ID3D12CommandQueue* pCopyCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Copy);
-    ID3D12CommandQueue* pGfxCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
-
-    const uint64_t currentFrame = pGpuDevice->m_currentFrame;
-    BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pCopyCmdQueue->Signal(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
-    BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pGfxCmdQueue->Wait(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
+    
 }
 
 void device::EndFrame(GpuDeviceHandle deviceHdl)
@@ -621,6 +611,39 @@ void device::EndFrame(GpuDeviceHandle deviceHdl)
     uploadHeap.m_currentUploadHeapOffset = 0;
 }
 
+void device::DrainPipeline(GpuDeviceHandle deviceHdl)
+{
+	GpuDevice* pGpuDevice = AsType<GpuDevice>(deviceHdl);
+	ID3D12CommandQueue* pCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
+
+	const uint64_t lastSubmittedFrame = pGpuDevice->m_currentFrame - 1;
+
+	ID3D12Fence* pFrameFence = pGpuDevice->m_pFrameFence.Get();
+	const HANDLE fenceEvent = pGpuDevice->m_fenceEvent;
+
+	if (pFrameFence->GetCompletedValue() < lastSubmittedFrame)
+	{
+		pFrameFence->SetEventOnCompletion(lastSubmittedFrame, fenceEvent);
+		WaitForSingleObject(fenceEvent, INFINITE);
+	}
+}
+
+void device::OnResourceUpdatesDone(GpuDeviceHandle deviceHdl)
+{
+	GpuDevice* const pGpuDevice = AsType<GpuDevice>(deviceHdl);
+	const CommandBufferHandle cmdBufferHdl = AsHandle<CommandBufferHandle>(&pGpuDevice->m_DmaCommandBuffer);
+
+	CloseCommandBuffer(cmdBufferHdl);
+	ExecuteCommandBuffer(deviceHdl, cmdBufferHdl);
+
+	ID3D12CommandQueue* pCopyCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Copy);
+	ID3D12CommandQueue* pGfxCmdQueue = GetCommandQueue(pGpuDevice, CommandType::Graphics);
+
+	const uint64_t currentFrame = pGpuDevice->m_currentFrame;
+	BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pCopyCmdQueue->Signal(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
+	BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pGfxCmdQueue->Wait(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
+}
+
 GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
 {
     GpuDeviceHandle deviceHdl = Handle_NULL;
@@ -672,6 +695,7 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
 
     ComPtr<ID3D12Device> pDevice {};
     ComPtr<ID3D12DescriptorHeap> pRtvDescriptorHeap {};
+    ComPtr<ID3D12DescriptorHeap> pDsvDescriptorHeap {};
     ComPtr<ID3D12DescriptorHeap> pViewDescriptorHeap {};
     ComPtr<ID3D12Fence> pFrameFence {};
     ComPtr<ID3D12Fence> pCopyFence {};
@@ -686,7 +710,7 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
     }
 
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-    rtvHeapDesc.NumDescriptors = framesOfLatency + 1;
+    rtvHeapDesc.NumDescriptors = std::max(framesOfLatency + 1u, 32u);
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
@@ -695,12 +719,22 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
         return Handle_NULL;
     }
 
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+    dsvHeapDesc.NumDescriptors = std::max(framesOfLatency + 1u, 32u);
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+	if (FAILED(pDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(pDsvDescriptorHeap.ReleaseAndGetAddressOf()))))
+	{
+		return Handle_NULL;
+	}
+
     static constexpr uint32_t ViewDescCount = 1024;
 
     D3D12_DESCRIPTOR_HEAP_DESC viewHeapDesc = {};
     viewHeapDesc.NumDescriptors = ViewDescCount;
-    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    viewHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    viewHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
     if (FAILED(pDevice->CreateDescriptorHeap(&viewHeapDesc, IID_PPV_ARGS(pViewDescriptorHeap.ReleaseAndGetAddressOf()))))
     {
@@ -725,12 +759,28 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
 
     GpuDevice* pGpuDevice = new GpuDevice();
     pGpuDevice->m_pDevice = pDevice;
-    pGpuDevice->m_pRtvDescriptorHeap = pRtvDescriptorHeap;
     pGpuDevice->m_pFrameFence = pFrameFence;
     pGpuDevice->m_pCopyFence = pCopyFence;
     pGpuDevice->m_fenceEvent = fenceEvent;
     pGpuDevice->m_framesOfLatency = framesOfLatency;
-    pGpuDevice->m_rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+    const size_t rtvDescriptorCount = rtvHeapDesc.NumDescriptors;
+    const size_t rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    const size_t rtvDescriptorHeapSize = rtvDescriptorCount * rtvDescriptorSize;
+    pGpuDevice->m_RtvDescriptorHeap.m_pDescriptorHeap = pRtvDescriptorHeap;
+    pGpuDevice->m_RtvDescriptorHeap.m_OffsetAllocator.Initialize(rtvDescriptorHeapSize, rtvDescriptorSize);
+
+	const size_t dsvDescriptorCount = dsvHeapDesc.NumDescriptors;
+	const size_t dsvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	const size_t dsvDescriptorHeapSize = dsvDescriptorCount * dsvDescriptorSize;
+	pGpuDevice->m_DsvDescriptorHeap.m_pDescriptorHeap = pDsvDescriptorHeap;
+	pGpuDevice->m_DsvDescriptorHeap.m_OffsetAllocator.Initialize(dsvDescriptorHeapSize, dsvDescriptorSize);
+
+	const size_t viewDescriptorCount = viewHeapDesc.NumDescriptors;
+	const size_t viewDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	const size_t viewDescriptorHeapSize = viewDescriptorCount * viewDescriptorSize;
+	pGpuDevice->m_ResourceViewHeap.m_pDescriptorHeap = pViewDescriptorHeap;
+	pGpuDevice->m_ResourceViewHeap.m_OffsetAllocator.Initialize(viewDescriptorHeapSize, viewDescriptorSize);
 
 #ifdef _DEBUG
     pGpuDevice->m_pDebug = pDxgiDebug;
@@ -838,8 +888,6 @@ SwapChainHandle device::CreateSwapChain(
                 // This sample does not support fullscreen transitions.
                 BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(factory->MakeWindowAssociation(windowHWND, DXGI_MWA_NO_ALT_ENTER)));
 
-                D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle(pGpuDevice->m_pRtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
                 StaticArray<TextureHandle> backBufferHandles(backBufferCount);
                 for (uint32_t i = 0; i < backBufferCount; ++i)
                 {
@@ -847,14 +895,13 @@ SwapChainHandle device::CreateSwapChain(
                     const HRESULT hr = pInternalSwapChain->m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&pResource));
                     if (SUCCEEDED(hr))
                     {
-                        pGpuDevice->m_pDevice->CreateRenderTargetView(pResource, nullptr, rtvHandle);
+                        const DescriptorHandle rtvHandle = util::GetDescriptorHandle(pGpuDevice->m_RtvDescriptorHeap);
+                        pGpuDevice->m_pDevice->CreateRenderTargetView(pResource, nullptr, rtvHandle.m_cpuHandle);
 
                         Texture* pTexture = new Texture();
                         pTexture->m_pResource = pResource;
-                        pTexture->m_rtvHandle = rtvHandle;
+                        pTexture->m_cbdbHandle = rtvHandle.m_cpuHandle;
                         AsHandle(pTexture, backBufferHandles[i]);
-
-                        rtvHandle.ptr += pGpuDevice->m_rtvDescriptorSize;
                     }
                 }
 
@@ -1147,20 +1194,7 @@ BufferHandle device::CreateBuffer(
     rscDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     rscDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-    const D3D12_RESOURCE_STATES nativeRscState = [](BufferType type)
-    {
-        switch (type)
-        {
-        case BufferType::Vertex:
-        case BufferType::Constant:
-            return D3D12_RESOURCE_STATE_COMMON;
-        case BufferType::Index:
-            return D3D12_RESOURCE_STATE_COMMON;
-        default:
-            BIOME_FAIL_MSG("Unsupported BufferType");
-            return D3D12_RESOURCE_STATE_COMMON;
-        }
-    }(type);
+    constexpr D3D12_RESOURCE_STATES nativeRscState = D3D12_RESOURCE_STATE_COMMON;
 
     std::unique_ptr<Buffer> spBuffer = std::make_unique<Buffer>();
 
@@ -1190,6 +1224,101 @@ BufferHandle device::CreateBuffer(
 
     Buffer* pBuffer = spBuffer.release();
     return ToHandle(pBuffer);
+}
+
+TextureHandle device::CreateTexture(
+    const GpuDeviceHandle deviceHdl,
+    const uint32_t pixelWidth, 
+    const uint32_t pixelHeight, 
+    const descriptors::Format format, 
+    const bool allowRtv, 
+    const bool allowDsv, 
+    const bool allowUav)
+{
+	GpuDevice* pDevice = ToType(deviceHdl);
+
+	// TODO: Use placed resources
+
+    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+    if (allowRtv) flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    if (allowDsv) flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+    if (allowUav) flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+	D3D12_RESOURCE_DESC rscDesc;
+	rscDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	rscDesc.Alignment = 0;
+	rscDesc.Width = pixelWidth;
+	rscDesc.Height = pixelHeight;
+	rscDesc.DepthOrArraySize = 1;
+	rscDesc.MipLevels = 1;
+	rscDesc.Format = ToNativeFormat(format);
+	rscDesc.SampleDesc.Count = 1;
+	rscDesc.SampleDesc.Quality = 0;
+	rscDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	rscDesc.Flags = flags;
+
+    D3D12_RESOURCE_STATES nativeRscState = D3D12_RESOURCE_STATE_COMMON;
+
+	std::unique_ptr<Texture> spTexture = std::make_unique<Texture>();
+
+	D3D12_HEAP_PROPERTIES heapProps;
+	heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+	heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	heapProps.CreationNodeMask = 0;
+	heapProps.VisibleNodeMask = 0;
+
+    D3D12_CLEAR_VALUE clearValue = {};
+    D3D12_CLEAR_VALUE* pClearValue = nullptr;
+
+    if (allowDsv)
+    { 
+        nativeRscState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+
+        clearValue.Format = rscDesc.Format;
+        clearValue.DepthStencil.Depth = 1.f;
+        clearValue.DepthStencil.Stencil = 0;
+        pClearValue = &clearValue;
+    }
+    else if (allowRtv)
+    {
+        nativeRscState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+        clearValue.Format = rscDesc.Format;
+        clearValue.Color[0] = clearValue.Color[1] = clearValue.Color[2] = clearValue.Color[3] = 0.f;
+        pClearValue = &clearValue;
+    }
+
+	const HRESULT hr = pDevice->m_pDevice->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&rscDesc,
+		nativeRscState,
+        pClearValue,
+		IID_PPV_ARGS(spTexture->m_pResource.ReleaseAndGetAddressOf()));
+
+	if (FAILED(hr))
+	{
+		return Handle_NULL;
+	}
+
+    // TODO: Add SRV & UAV
+
+    if (allowDsv)
+    {
+		const DescriptorHandle dsvHandle = util::GetDescriptorHandle(pDevice->m_DsvDescriptorHeap);
+        pDevice->m_pDevice->CreateDepthStencilView(spTexture->m_pResource.Get(), nullptr, dsvHandle.m_cpuHandle);
+		spTexture->m_cbdbHandle = dsvHandle.m_cpuHandle;
+    }
+    else if (allowRtv)
+    {
+		const DescriptorHandle rtvHandle = util::GetDescriptorHandle(pDevice->m_RtvDescriptorHeap);
+        pDevice->m_pDevice->CreateRenderTargetView(spTexture->m_pResource.Get(), nullptr, rtvHandle.m_cpuHandle);
+		spTexture->m_cbdbHandle = rtvHandle.m_cpuHandle;
+    }
+
+	Texture* pTexture = spTexture.release();
+	return AsHandle<TextureHandle>(pTexture);
 }
 
 void* device::MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
@@ -1295,6 +1424,16 @@ void device::DestroyComputePipeline(ComputePipelineHandle /*hdl*/)
 void device::DestroyDescriptorHeap(DescriptorHeapHandle /*hdl*/)
 {
 
+}
+
+void device::DestroyBuffer(GpuDeviceHandle deviceHdl, BufferHandle bufferHdl)
+{
+    // TODO
+}
+
+void device::DestroyTexture(GpuDeviceHandle deviceHdl, TextureHandle textureHdl)
+{
+    // TODO
 }
 
 void device::SignalFence(FenceHandle /*fenceHdl*/)

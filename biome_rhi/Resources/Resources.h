@@ -17,6 +17,12 @@ namespace biome::rhi
             MemoryOffsetAllocator           m_OffsetAllocator {};
         };
 
+        struct DescriptorHandle
+        {
+            D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle {};
+            D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandle {};
+        };
+
         struct UploadHeap
         {
             biome::data::Vector<ComPtr<ID3D12Resource>> m_spUploadBuffers {};
@@ -51,7 +57,7 @@ namespace biome::rhi
 
         struct Texture : public Resource
         {
-            D3D12_CPU_DESCRIPTOR_HANDLE m_rtvHandle {};
+            D3D12_CPU_DESCRIPTOR_HANDLE m_cbdbHandle {};
         };
 
         struct Buffer : public Resource
@@ -68,7 +74,9 @@ namespace biome::rhi
             static constexpr uint32_t                       UploadHeapByteSize = MiB(128);
 
             ComPtr<ID3D12Device>                            m_pDevice { nullptr };
-            ComPtr<ID3D12DescriptorHeap>                    m_pRtvDescriptorHeap { nullptr };
+            DescriptorHeap                                  m_RtvDescriptorHeap {};
+            DescriptorHeap                                  m_DsvDescriptorHeap {};
+            DescriptorHeap                                  m_ResourceViewHeap {};
             ComPtr<ID3D12Fence>                             m_pFrameFence { nullptr };
             ComPtr<ID3D12Fence>                             m_pCopyFence { nullptr };
         #ifdef _DEBUG
@@ -77,13 +85,10 @@ namespace biome::rhi
             biome::data::StaticArray<CommandQueueHandle>    m_CommandQueues {};
             biome::data::StaticArray<UploadHeap>            m_UploadHeaps {};
             biome::data::Vector<CommandBuffer*>             m_CommandBuffers {};
-            DescriptorHeap                                  m_ResourceViewHeap {};
             CommandBuffer                                   m_DmaCommandBuffer {};
             uint64_t                                        m_currentFrame { 0 };
             HANDLE                                          m_fenceEvent {};
-            uint32_t                                        m_rtvDescriptorSize { 0 };
             uint32_t                                        m_framesOfLatency { 0 };
-
         };
     }
 

@@ -218,6 +218,7 @@
     </ClCompile>
     <ClCompile Include="Systems\CommandSystem.cpp" />
     <ClCompile Include="Systems\DeviceSystem.cpp" />
+    <ClCompile Include="Systems\SystemUtils.cpp" />
     <ClCompile Include="WindowFactory\WindowFactory.cpp" />
   </ItemGroup>
   <ItemGroup>

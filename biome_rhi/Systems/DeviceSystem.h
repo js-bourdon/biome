@@ -31,6 +31,8 @@ namespace biome::rhi
 
         void                        StartFrame(GpuDeviceHandle deviceHdl);
         void                        EndFrame(GpuDeviceHandle deviceHdl);
+        void                        OnResourceUpdatesDone(GpuDeviceHandle deviceHdl);
+        void                        DrainPipeline(GpuDeviceHandle deviceHdl);
 
         uint64_t                    GetCurrentFrameIndex(GpuDeviceHandle deviceHdl);
         Format                      GetSwapChainFormat(SwapChainHandle hdl);
@@ -50,6 +52,15 @@ namespace biome::rhi
                                         const uint32_t stride, 
                                         const Format format);
 
+		TextureHandle               CreateTexture(
+                                        const GpuDeviceHandle deviceHdl,
+                                        const uint32_t pixelWidth,
+			                            const uint32_t pixelHeight,
+			                            const descriptors::Format format,
+			                            const bool allowRtv,
+			                            const bool allowDsv,
+			                            const bool allowUav);
+
         void*                       MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
         void                        UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
 
@@ -60,6 +71,8 @@ namespace biome::rhi
         void                        DestroyGfxPipeline(GfxPipelineHandle hdl);
         void                        DestroyComputePipeline(ComputePipelineHandle hdl);
         void                        DestroyDescriptorHeap(DescriptorHeapHandle hdl);
+        void                        DestroyBuffer(GpuDeviceHandle deviceHdl, BufferHandle bufferHdl);
+        void                        DestroyTexture(GpuDeviceHandle deviceHdl, TextureHandle textureHdl);
 
         void                        SignalFence(FenceHandle fenceHdl);
         void                        GPUWaitOnFence(FenceHandle fenceHdl);

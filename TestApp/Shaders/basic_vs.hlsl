@@ -1,27 +1,29 @@
 #include "root_signature.hlsl"
 
-[RootSignature(RootSig)]
-float4 main( float4 pos : POSITION ) : SV_POSITION
+struct Constants
 {
-    float4 finalPos = float4(pos.xyz, 1.f);
+    float4x4 view;
+    float4x4 projection;
+};
 
-    float4x4 v =
-    {
-        1.f,    0.f,    0.f,    0.f,
-        0.f,    1.f,    0.f,    0.f,
-        0.f,    0.f,    1.f,    0.f,
-        0.f,    0.f,    -50.f,  1.f,
-    };
+ConstantBuffer<Constants> cb;
 
-    float4x4 p = 
-    {
-        54.7072f,   0.f,        0.f,        0.f,
-        0.f,        97.2647f,   0.f,        0.f,
-        0.f,        0.f,        1.0101f,    1.f,
-        0.f,        0.f,        -5.0505f,   0.f
-    };
+struct VsOut
+{
+    float4 pos : SV_POSITION;
+    float4 worldPos : TEXCOORD0;
+};
 
-    float4x4 vp = mul(v, p);
+[RootSignature(RootSig)]
+VsOut main( float4 pos : POSITION )
+{
+    float4 worldPos = float4(pos.xyz, 1.f);
+    float4x4 vp = mul(cb.view, cb.projection);
+    float4 clipPos = mul(worldPos, vp);
+    
+    VsOut vsOut;
+    vsOut.pos = clipPos;
+    vsOut.worldPos = worldPos;
 
-    return mul(pos, vp);
+    return vsOut;
 }

@@ -42,6 +42,9 @@
     <Filter Include="src\Libraries">
       <UniqueIdentifier>{869e0f44-7b35-4577-8cc2-225156562b80}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Time">
+      <UniqueIdentifier>{82988d41-2bc9-451f-9e52-d285f8ada2da}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -128,6 +131,9 @@
     <ClInclude Include="FileSystem\FileSystemWatcher.h">
       <Filter>src\FileSystem</Filter>
     </ClInclude>
+    <ClInclude Include="Time\Timer.h">
+      <Filter>src\Time</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructures\IndexFreeList.cpp">
@@ -177,6 +183,9 @@
     </ClCompile>
     <ClCompile Include="FileSystem\FileSystemWatcher.cpp">
       <Filter>src\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Time\Timer.cpp">
+      <Filter>src\Time</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

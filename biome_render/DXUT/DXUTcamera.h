@@ -115,15 +115,10 @@ protected:
 
     void UpdateMouseDelta();
     void UpdateVelocity( _In_ float fElapsedTime );
-    void GetInput( _In_ bool bGetKeyboardInput, _In_ bool bGetMouseInput, _In_ bool bGetGamepadInput );
+    void GetInput( _In_ bool bGetKeyboardInput, _In_ bool bGetMouseInput );
 
     DirectX::XMFLOAT4X4 m_mView;                    // View matrix 
     DirectX::XMFLOAT4X4 m_mProj;                    // Projection matrix
-
-    DXUT_GAMEPAD m_GamePad[DXUT_MAX_CONTROLLERS];  // XInput controller state
-    DirectX::XMFLOAT3 m_vGamePadLeftThumb;
-    DirectX::XMFLOAT3 m_vGamePadRightThumb;
-    double m_GamePadLastActive[DXUT_MAX_CONTROLLERS];
 
     int m_cKeysDown;                        // Number of camera keys that are down.
     BYTE m_aKeys[CAM_MAX_KEYS];             // State of input - KEY_WAS_DOWN_MASK|KEY_IS_DOWN_MASK
@@ -202,129 +197,3 @@ protected:
     bool m_bRotateWithoutButtonDown;
 };
 
-
-//--------------------------------------------------------------------------------------
-// Simple model viewing camera class that rotates around the object.
-//--------------------------------------------------------------------------------------
-class CModelViewerCamera : public CBaseCamera
-{
-public:
-    CModelViewerCamera() noexcept;
-
-    // Call these from client and use Get*Matrix() to read new matrices
-    virtual LRESULT HandleMessages( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam ) override;
-    virtual void FrameMove( _In_ float fElapsedTime ) override;
-
-    // Functions to change behavior
-    virtual void SetDragRect( _In_ const RECT& rc ) override;
-    virtual void Reset() override;
-    virtual void SetViewParams( _In_ DirectX::CXMVECTOR pvEyePt, _In_ DirectX::CXMVECTOR pvLookatPt ) override;
-    void SetButtonMasks( _In_ int nRotateModelButtonMask = MOUSE_LEFT_BUTTON, _In_ int nZoomButtonMask = MOUSE_WHEEL,
-                         _In_ int nRotateCameraButtonMask = MOUSE_RIGHT_BUTTON )
-    {
-        m_nRotateModelButtonMask = nRotateModelButtonMask, m_nZoomButtonMask = nZoomButtonMask;
-        m_nRotateCameraButtonMask = nRotateCameraButtonMask;
-    }
-    void SetAttachCameraToModel( _In_ bool bEnable = false ) { m_bAttachCameraToModel = bEnable; }
-    void SetWindow( _In_ int nWidth, _In_ int nHeight, _In_ float fArcballRadius=0.9f )
-    {
-        m_WorldArcBall.SetWindow( nWidth, nHeight, fArcballRadius );
-        m_ViewArcBall.SetWindow( nWidth, nHeight, fArcballRadius );
-    }
-    void SetRadius( _In_ float fDefaultRadius=5.0f, _In_ float fMinRadius=1.0f, _In_ float fMaxRadius=FLT_MAX )
-    {
-        m_fDefaultRadius = m_fRadius = fDefaultRadius; m_fMinRadius = fMinRadius; m_fMaxRadius = fMaxRadius;
-        m_bDragSinceLastUpdate = true;
-    }
-    void SetModelCenter( _In_ const DirectX::XMFLOAT3& vModelCenter ) { m_vModelCenter = vModelCenter; }
-    void SetLimitPitch( _In_ bool bLimitPitch ) { m_bLimitPitch = bLimitPitch; }
-    void XM_CALLCONV SetViewQuat( _In_ DirectX::FXMVECTOR q )
-    {
-        m_ViewArcBall.SetQuatNow( q );
-        m_bDragSinceLastUpdate = true;
-    }
-    void XM_CALLCONV SetWorldQuat( _In_ DirectX::FXMVECTOR q )
-    {
-        m_WorldArcBall.SetQuatNow( q );
-        m_bDragSinceLastUpdate = true;
-    }
-
-    // Functions to get state
-    DirectX::XMMATRIX GetWorldMatrix() const { return DirectX::XMLoadFloat4x4( &m_mWorld ); }
-    void SetWorldMatrix( _In_ DirectX::CXMMATRIX mWorld )
-    {
-        XMStoreFloat4x4( &m_mWorld, mWorld );
-        m_bDragSinceLastUpdate = true;
-    }
-
-protected:
-    CD3DArcBall m_WorldArcBall;
-    CD3DArcBall m_ViewArcBall;
-    DirectX::XMFLOAT3 m_vModelCenter;
-    DirectX::XMFLOAT4X4 m_mModelLastRot;     // Last arcball rotation matrix for model 
-    DirectX::XMFLOAT4X4 m_mModelRot;         // Rotation matrix of model
-    DirectX::XMFLOAT4X4 m_mWorld;            // World matrix of model
-
-    int m_nRotateModelButtonMask;
-    int m_nZoomButtonMask;
-    int m_nRotateCameraButtonMask;
-
-    bool m_bAttachCameraToModel;
-    bool m_bLimitPitch;
-    bool m_bDragSinceLastUpdate;            // True if mouse drag has happened since last time FrameMove is called.
-    float m_fRadius;                        // Distance from the camera to model 
-    float m_fDefaultRadius;                 // Distance from the camera to model 
-    float m_fMinRadius;                     // Min radius
-    float m_fMaxRadius;                     // Max radius
-
-    DirectX::XMFLOAT4X4 m_mCameraRotLast;
-};
-
-
-//--------------------------------------------------------------------------------------
-// Manages the mesh, direction, mouse events of a directional arrow that 
-// rotates around a radius controlled by an arcball 
-//--------------------------------------------------------------------------------------
-class CDXUTDirectionWidget
-{
-public:
-    CDXUTDirectionWidget() noexcept;
-
-    LRESULT HandleMessages( _In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam );
-
-    HRESULT OnRender( _In_ DirectX::CXMVECTOR color, _In_ DirectX::CXMMATRIX pmView, _In_ DirectX::CXMMATRIX pmProj, _In_ DirectX::CXMVECTOR vEyePt );
-
-    DirectX::XMVECTOR GetLightDirection() const { return DirectX::XMLoadFloat3( &m_vCurrentDir ); }
-    void XM_CALLCONV SetLightDirection( _In_ DirectX::FXMVECTOR vDir )
-    {
-        DirectX::XMStoreFloat3( &m_vCurrentDir, vDir );
-        m_vDefaultDir = m_vCurrentDir;
-    }
-    void SetLightDirection( _In_ DirectX::XMFLOAT3 vDir )
-    {
-        m_vDefaultDir = m_vCurrentDir = vDir;
-    }
-    void SetButtonMask( _In_ int nRotate = MOUSE_RIGHT_BUTTON ) { m_nRotateMask = nRotate; }
-
-    float GetRadius() const { return m_fRadius; }
-    void SetRadius( _In_ float fRadius ) { m_fRadius = fRadius; }
-
-    bool IsBeingDragged() { return m_ArcBall.IsBeingDragged(); }
-
-    static HRESULT WINAPI StaticOnD3D11CreateDevice( _In_ ID3D11Device* pd3dDevice, _In_ ID3D11DeviceContext* pd3dImmediateContext );
-    static void WINAPI StaticOnD3D11DestroyDevice();
-
-protected:
-    HRESULT UpdateLightDir();
-
-    // TODO - need support for Direct3D 11 widget
-
-    DirectX::XMFLOAT4X4 m_mRot;
-    DirectX::XMFLOAT4X4 m_mRotSnapshot;
-    float m_fRadius;
-    int m_nRotateMask;
-    CD3DArcBall m_ArcBall;
-    DirectX::XMFLOAT3 m_vDefaultDir;
-    DirectX::XMFLOAT3 m_vCurrentDir;
-    DirectX::XMFLOAT4X4 m_mView;
-};

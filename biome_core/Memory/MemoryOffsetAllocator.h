@@ -21,13 +21,14 @@ namespace biome
             MemoryOffsetAllocator& operator=(MemoryOffsetAllocator&&) = delete;
             ~MemoryOffsetAllocator();
 
-            [[nodiscard]]
-            bool        Initialize(size_t byteSize, size_t pageSize);
+            void        Initialize(size_t byteSize, size_t pageSize);
             [[nodiscard]]
             bool        IsInitialized();
             void        Shutdown();
             size_t      Allocate(size_t byteSize);
+            size_t      AllocatePages(size_t pageCount);
             bool        Release(size_t byteOffset);
+            size_t      GetPageSize() const { return m_SystemPageSize; }
 
         private:
 
@@ -44,7 +45,6 @@ namespace biome
             static bool CanMerge(const Range& range0, const Range& range1);
             static bool Merge(const Range& range0, const Range& range1, Range& newRange);
             static void AddRange(const Range& range, Range* pRanges, size_t& rangeCount);
-            static bool FindRange(size_t offset, Range* pRanges, size_t& rangeCount);
 
             Range*      m_pFreeRanges { nullptr };
             Range*      m_pUsedRanges { nullptr };

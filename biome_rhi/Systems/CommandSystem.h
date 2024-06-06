@@ -21,6 +21,7 @@ namespace biome::rhi
         void SetGraphicsShaderResourceLayout(CommandBufferHandle cmdBufferHdl, ShaderResourceLayoutHandle srlHdl);
         void SetComputeConstant(CommandBufferHandle cmdBufferHdl, uint32_t index, uint32_t value, uint32_t destOffsetInValues);
         void SetDescriptorHeaps(CommandBufferHandle cmdBufferHdl, uint32_t count, const DescriptorHeapHandle* pHeapHdls);
+        void SetGraphicsConstantBuffer(const CommandBufferHandle cmdBufferHdl, const BufferHandle cbvHandle, const uint32_t index);
         void SetComputeDescriptorTable(CommandBufferHandle cmdBufferHdl, uint32_t index, const DescriptorTable& table);
         void SetGraphicsDescriptorTable(CommandBufferHandle cmdBufferHdl, uint32_t index, const DescriptorTable& table);
         void SetGfxPipeline(CommandBufferHandle cmdBufferHdl, GfxPipelineHandle pipelineHdl);

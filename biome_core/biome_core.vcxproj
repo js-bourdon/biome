@@ -208,6 +208,7 @@
     <ClInclude Include="sqlite\sqlite3.h" />
     <ClInclude Include="SystemInfo\SystemInfo.h" />
     <ClInclude Include="Threading\WorkerThread.h" />
+    <ClInclude Include="Time\Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\AssetDatabase.cpp" />
@@ -241,6 +242,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SystemInfo\SystemInfo.cpp" />
+    <ClCompile Include="Time\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DataStructures\StaticArray.inl" />

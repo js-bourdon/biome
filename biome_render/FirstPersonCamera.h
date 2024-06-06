@@ -1,7 +1,7 @@
 #pragma once
 
 #include "biome_core/Math/Math.h"
-#include <DirectXMath.h>
+#include "biome_render/DXUT/DXUTcamera.h"
 
 namespace biome::render
 {
@@ -9,7 +9,10 @@ namespace biome::render
     {
     public:
 
-        static const FirstPersonCamera& Instance();
+        typedef void (*MessageCallback)(void* const pContext, const void* const pMsg);
+
+		FirstPersonCamera() = default;
+		~FirstPersonCamera();
 
         void Init(
             const biome::math::Vector4 worldPosition, 
@@ -27,13 +30,14 @@ namespace biome::render
         biome::math::Vector2    GetViewSpaceZParams() const;
         void                    GetClipPlanes(float& near, float& far) const;
 
+        MessageCallback         GetMessageCallback() const { return InternalCallback; }
+        void                    FrameMove(float fElapsedTime);
+
     private:
 
-        FirstPersonCamera() = default;
-        ~FirstPersonCamera() = default;
+        static void InternalCallback(void* const pContext, const void* const pMsg);
 
         void HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-        void FrameMove(float fElapsedTime);
 
     private:
 

@@ -85,7 +85,25 @@ void commands::SetComputeConstant(CommandBufferHandle cmdBufferHdl, uint32_t ind
 
 void commands::SetDescriptorHeaps(CommandBufferHandle cmdBufferHdl, uint32_t count, const DescriptorHeapHandle* pHeapHdls)
 {
+    BIOME_ASSERT(count >= 1 && count <= 2);
+    CommandBuffer* pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
+    ID3D12DescriptorHeap* heaps[2];
+    const uint32_t finalCount = std::min(2u, count);
 
+    for (uint32_t heapIndex = 0; heapIndex < finalCount; ++heapIndex)
+    {
+        DescriptorHeap* const pDescriptorHeap = AsType<DescriptorHeap>(pHeapHdls[heapIndex]);
+        heaps[heapIndex] = pDescriptorHeap->m_pDescriptorHeap.Get();
+    }
+
+    pCmdBuffer->m_pCmdList->SetDescriptorHeaps(finalCount, heaps);
+}
+
+void commands::SetGraphicsConstantBuffer(const CommandBufferHandle cmdBufferHdl, const BufferHandle cbvHandle, const uint32_t index)
+{
+    CommandBuffer* pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
+    Buffer* pBuffer = AsType<Buffer>(cbvHandle);
+    pCmdBuffer->m_pCmdList->SetGraphicsRootConstantBufferView(index, pBuffer->m_pResource->GetGPUVirtualAddress());
 }
 
 void commands::SetComputeDescriptorTable(CommandBufferHandle cmdBufferHdl, uint32_t index, const DescriptorTable& table)
@@ -147,7 +165,11 @@ void commands::DrawIndexedInstanced(
 
 void commands::ClearDepthStencil(CommandBufferHandle cmdBufferHdl, TextureHandle depthStencilHdl)
 {
+    CommandBuffer* pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
+    Texture* pDepthStencilTexture = AsType<Texture>(depthStencilHdl);
 
+    constexpr D3D12_CLEAR_FLAGS clearFlags = D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL;
+	pCmdBuffer->m_pCmdList->ClearDepthStencilView(pDepthStencilTexture->m_cbdbHandle, clearFlags, 1.f, 0, 0, nullptr);
 }
 
 void commands::ClearRenderTarget(CommandBufferHandle cmdBufferHdl, TextureHandle renderTargetHdl, Vector4 clearColor)
@@ -158,7 +180,7 @@ void commands::ClearRenderTarget(CommandBufferHandle cmdBufferHdl, TextureHandle
     Texture* pTexture;
     AsType(pTexture, renderTargetHdl);
 
-    pCmdBuffer->m_pCmdList->ClearRenderTargetView(pTexture->m_rtvHandle, clearColor.f, 0, nullptr);
+    pCmdBuffer->m_pCmdList->ClearRenderTargetView(pTexture->m_cbdbHandle, clearColor.f, 0, nullptr);
 }
 
 void commands::SetIndexBuffer(CommandBufferHandle cmdBufferHdl, BufferHandle indexBufferHdl)
@@ -227,21 +249,19 @@ void commands::OMSetRenderTargets(
 
     constexpr uint32_t MaxRtCount = 8;
     BIOME_ASSERT(rtCount <= MaxRtCount);
-    D3D12_CPU_DESCRIPTOR_HANDLE rtDescriptors[MaxRtCount];
+    D3D12_CPU_DESCRIPTOR_HANDLE rtDescriptors[MaxRtCount] = {};
 
     for (uint32_t i = 0; i < rtCount; ++i)
     {
-        Texture* pRt;
-        AsType(pRt, pRenderTargets[i]);
-        rtDescriptors[i] = pRt->m_rtvHandle;
+        Texture* pRt = AsType<Texture>(pRenderTargets[i]);
+        rtDescriptors[i] = pRt->m_cbdbHandle;
     }
 
     D3D12_CPU_DESCRIPTOR_HANDLE* pDsDescriptor = nullptr;
     if (pDepthStencil != nullptr)
     {
-        Texture* pDs;
-        AsType(pDs, *pDepthStencil);
-        pDsDescriptor = &pDs->m_rtvHandle;
+        Texture* pDs = AsType<Texture>(*pDepthStencil);
+        pDsDescriptor = &pDs->m_cbdbHandle;
     }
 
     pCmdBuffer->m_pCmdList->OMSetRenderTargets(rtCount, rtDescriptors, FALSE, pDsDescriptor);

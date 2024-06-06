@@ -4,7 +4,7 @@
 
 using namespace biome::memory;
 
-bool MemoryOffsetAllocator::Initialize(size_t byteSize, size_t pageSize)
+void MemoryOffsetAllocator::Initialize(size_t byteSize, size_t pageSize)
 {
     const size_t pageCount = Align(byteSize, pageSize) / pageSize;
     const size_t metadataOverhead = sizeof(Range) * pageCount * 2;
@@ -18,8 +18,6 @@ bool MemoryOffsetAllocator::Initialize(size_t byteSize, size_t pageSize)
 
     m_SystemPageSize = pageSize;
     m_TotalPageCount = pageCount;
-
-    return true;
 }
 
 bool MemoryOffsetAllocator::IsInitialized()
@@ -46,16 +44,18 @@ size_t MemoryOffsetAllocator::Allocate(size_t byteSize)
 
     const size_t requiredPageCount = Align(byteSize, m_SystemPageSize) / m_SystemPageSize;
 
-    for (size_t i = m_FreeRangeCount - 1; i >= 0; --i)
+    for (int64_t i = m_FreeRangeCount - 1; i >= 0; --i)
     {
         Range& range = m_pFreeRanges[i];
         if (range.m_Count >= requiredPageCount)
         {
-            Range usedRange { range.m_Offset - range.m_Count + requiredPageCount, requiredPageCount };
+            Range usedRange { range.m_Offset, requiredPageCount};
             AddUsedRange(usedRange);
 
+            range.m_Offset += requiredPageCount;
             range.m_Count -= requiredPageCount;
-            if (range.m_Count == 0)
+            
+            if (range.m_Count == 0 && m_FreeRangeCount > 1)
             {
                 Range& lastRange = m_pFreeRanges[m_FreeRangeCount - 1];
                 range.m_Offset = lastRange.m_Offset;
@@ -64,7 +64,7 @@ size_t MemoryOffsetAllocator::Allocate(size_t byteSize)
                 --m_FreeRangeCount;
             }
 
-            return usedRange.m_Offset;
+            return usedRange.m_Offset * m_SystemPageSize;
         }
     }
 
@@ -72,12 +72,19 @@ size_t MemoryOffsetAllocator::Allocate(size_t byteSize)
     return InvalidOffset;
 }
 
+size_t MemoryOffsetAllocator::AllocatePages(size_t pageCount)
+{
+    return Allocate(m_SystemPageSize * pageCount);
+}
+
 bool MemoryOffsetAllocator::Release(size_t byteOffset)
 {
+    const size_t pageOffset = byteOffset / m_SystemPageSize;
+
     for (size_t i = 0; i < m_UsedRangeCount; ++i)
     {
         Range& range = m_pUsedRanges[i];
-        if (range.m_Offset == byteOffset)
+        if (range.m_Offset == pageOffset)
         {
             AddFreeRange(range);
 
@@ -113,9 +120,6 @@ void MemoryOffsetAllocator::AddUsedRange(const Range& range)
     newRange.m_Offset = range.m_Offset;
     newRange.m_Count = range.m_Count;
     ++m_UsedRangeCount;
-
-
-    AddRange(range, m_pUsedRanges, m_UsedRangeCount);
 }
 
 void MemoryOffsetAllocator::AddRange(const Range& range, Range* pRanges, size_t& rangeCount)

@@ -14,11 +14,13 @@
 #include "biome_core/Threading/WorkerThread.h"
 #include "biome_core/Assets/AssetDatabase.h"
 #include "biome_core/FileSystem/FileSystem.h"
+#include "biome_core/Time/Timer.h"
 #include "biome_rhi/Systems/DeviceSystem.h"
 #include "biome_rhi/Systems/CommandSystem.h"
 #include "biome_rhi/Descriptors/PipelineDesc.h"
 #include "biome_rhi/Descriptors/Viewport.h"
 #include "biome_rhi/Descriptors/Rectangle.h"
+#include "biome_render/FirstPersonCamera.h"
 
 #ifdef _DEBUG
     #include <pix3.h>
@@ -28,6 +30,7 @@ using namespace biome::rhi;
 using namespace biome::memory;
 using namespace biome::threading;
 using namespace biome::asset;
+using namespace biome::render;
 using namespace std::chrono_literals;
 
 static int WorkerFunction(int iterationCount)
@@ -42,6 +45,13 @@ static int WorkerFunction(int iterationCount)
 }
 
 typedef int (WorkerFnctType)(int);
+
+// TODO: Remove hardcoded 256
+struct alignas(256) Constants
+{
+    biome::math::Matrix4x4 ViewMatrix {};
+    biome::math::Matrix4x4 ProjectionMatrix {};
+};
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -91,19 +101,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     const StaticArray<uint8_t> buffers = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Buffers.bin");
 
-    const BufferHandle indexBufferHdl = 
-        device::CreateBuffer(deviceHdl, BufferType::Index, static_cast<uint32_t>(indexBuffer.m_byteSize), 4u, Format::R32_UINT);
-    const BufferHandle vertexBufferHdl = 
-        device::CreateBuffer(deviceHdl, BufferType::Vertex, static_cast<uint32_t>(vertexBuffer.m_byteSize), 12u, Format::Unknown);
+    const uint32_t indexBufferSize = static_cast<uint32_t>(indexBuffer.m_byteSize);
+    const uint32_t vertexBufferSize = static_cast<uint32_t>(vertexBuffer.m_byteSize);
+    const uint32_t constantBufferSize = static_cast<uint32_t>(sizeof(Constants));
+
+    const BufferHandle indexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Index, indexBufferSize, 4u, Format::R32_UINT);
+    const BufferHandle vertexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Vertex, vertexBufferSize, 12u, Format::Unknown);
+    const BufferHandle constantBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Constant, constantBufferSize, 0u, Format::Unknown);
+
+    constexpr bool allowRtv = false;
+    constexpr bool allowDsv = true;
+    constexpr bool allowUav = false;
+    constexpr Format dsvFormat = Format::D24_UNORM_S8_UINT;
+
+    const TextureHandle depthBufferHdl = device::CreateTexture(deviceHdl, windowWidth, windowHeight, dsvFormat, allowRtv, allowDsv, allowUav);
 
     void* pIndexBufferData = device::MapBuffer(deviceHdl, indexBufferHdl);
     void* pVertexBufferData = device::MapBuffer(deviceHdl, vertexBufferHdl);
 
     memcpy(pIndexBufferData, buffers.Data() + indexBuffer.m_byteOffset, indexBuffer.m_byteSize);
     memcpy(pVertexBufferData, buffers.Data() + vertexBuffer.m_byteOffset, vertexBuffer.m_byteSize);
-
-    //static bool pix_capture = true;
-    //PIXBeginCapture(PIX_CAPTURE_GPU, nullptr);
 
     device::UnmapBuffer(deviceHdl, indexBufferHdl);
     device::UnmapBuffer(deviceHdl, vertexBufferHdl);
@@ -130,7 +147,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     pipelineDesc.RenderTargetFormats[0] = device::GetSwapChainFormat(swapChainHdl);
     pipelineDesc.RenderTargetCount = 1;
     pipelineDesc.BlendState.IsEnabled = false;
-    pipelineDesc.RasterizerState.DepthClip = false;
+    pipelineDesc.DepthFormat = descriptors::Format::D24_UNORM_S8_UINT;
+    pipelineDesc.DepthStencilState.DepthFunction = descriptors::ComparisonFunction::LESS_EQUAL;
+    pipelineDesc.DepthStencilState.IsDepthTestEnabled = true;
+    pipelineDesc.DepthStencilState.IsDepthWriteEnabled = true;
 
     pipelineDesc.InputLayout.Elements = StaticArray<InputLayoutElement>
     {
@@ -160,18 +180,43 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     viewport.m_minDepth = 0.f;
     viewport.m_maxDepth = 1.f;
 
+	constexpr biome::math::Vector4 worldPos = { 0.f, 0.0f, -500.f, 1.f };
+	constexpr biome::math::Vector4 lookAtWorldPos = { 0.f, 0.0f, 0.f, 1.f };
+	constexpr float fov = biome::math::PI_ON_FOUR;
+	constexpr float nearPlane = 0.1f;
+	constexpr float farPlane = 5000.0f;
+    const float aspectRatio = static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
+
+    FirstPersonCamera camera = {};
+    camera.Init(worldPos, lookAtWorldPos, fov, aspectRatio, nearPlane, farPlane);
+
+    biome::rhi::events::MessageConsumer msgConsumer = { camera.GetMessageCallback(), &camera };
+    biome::rhi::events::RegisterMessageConsumer(msgConsumer);
+
+    biome::time::Timer timer = {};
+
     while (!biome::rhi::events::PumpMessages())
     {
-        // Perform any copy operation before StartFrame.
-        // Transfer to GPU happens in StartFrame.
+        camera.FrameMove(timer.GetElapsedSecondsSinceLastCall());
 
         device::StartFrame(deviceHdl);
 
-        //if (pix_capture)
-        //{
-        //    PIXEndCapture(FALSE);
-        //    pix_capture = false;
-        //}
+		// Perform any copy operation before OnResourceCopyDone.
+
+        // Update constant buffer
+		{
+            Constants constants =
+            {
+                camera.GetViewMatrix(),
+                camera.GetProjMatrix()
+            };
+
+			void* pConstantBufferData = device::MapBuffer(deviceHdl, constantBufferHdl);
+			memcpy(pConstantBufferData, &constants, sizeof(constants));
+			device::UnmapBuffer(deviceHdl, constantBufferHdl);
+		}
+
+        device::OnResourceUpdatesDone(deviceHdl);
 
         const TextureHandle backBufferHdl = device::GetBackBuffer(deviceHdl, swapChainHdl);
 
@@ -180,6 +225,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         commands::SetPrimitiveTopology(cmdBufferHdl, PrimitiveTopology::TriangleList);
         commands::RSSetScissorRects(cmdBufferHdl, 1, &scissorRect);
         commands::RSSetViewports(cmdBufferHdl, 1, &viewport);
+        commands::SetGraphicsConstantBuffer(cmdBufferHdl, constantBufferHdl, 1);
 
         commands::TextureStateTransition transition;
         transition.m_textureHdl = backBufferHdl;
@@ -191,7 +237,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         commands::SetVertexBuffers(cmdBufferHdl, 0, 1, &vertexBufferHdl);
 
         commands::ClearRenderTarget(cmdBufferHdl, backBufferHdl, { 0.f, 0.5f, 0.f ,0.f });
-        commands::OMSetRenderTargets(cmdBufferHdl, 1, &backBufferHdl, nullptr);
+        commands::ClearDepthStencil(cmdBufferHdl, depthBufferHdl);
+        commands::OMSetRenderTargets(cmdBufferHdl, 1, &backBufferHdl, &depthBufferHdl);
         commands::DrawIndexedInstanced(cmdBufferHdl, static_cast<uint32_t>(indexBuffer.m_byteSize >> 2u), 1u, 0u, 0u, 0u);
 
         transition.m_before = ResourceState::RenderTarget;
@@ -205,11 +252,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         device::EndFrame(deviceHdl);
 
-        std::this_thread::sleep_for(100ms);
+        //std::this_thread::sleep_for(100ms);
     }
 
     DestroyDatabase(pAssetDb);
 
+    device::DrainPipeline(deviceHdl);
     device::DestroyGfxPipeline(gfxPipeHdl);
     device::DestroyShaderResourceLayout(rscLayoutHdl);
     device::DestroySwapChain(swapChainHdl);
