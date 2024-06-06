@@ -22,8 +22,8 @@ namespace biome::rhi
             BlendStateDesc              BlendState {};
             DepthStencilStateDesc       DepthStencilState {};
             RasterizerStateDesc         RasterizerState {};
-            Format                 RenderTargetFormats[s_OMMaxRenderTargetCount] {};
-            Format                 DepthFormat {};
+            Format                      RenderTargetFormats[s_OMMaxRenderTargetCount] {};
+            Format                      DepthFormat {};
             uint32_t                    RenderTargetCount { 0 };
         };
 

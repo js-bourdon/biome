@@ -180,11 +180,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     viewport.m_minDepth = 0.f;
     viewport.m_maxDepth = 1.f;
 
-	constexpr biome::math::Vector4 worldPos = { 0.f, 0.0f, -500.f, 1.f };
-	constexpr biome::math::Vector4 lookAtWorldPos = { 0.f, 0.0f, 0.f, 1.f };
-	constexpr float fov = biome::math::PI_ON_FOUR;
-	constexpr float nearPlane = 0.1f;
-	constexpr float farPlane = 5000.0f;
+    constexpr biome::math::Vector4 worldPos = { 0.f, 0.0f, -500.f, 1.f };
+    constexpr biome::math::Vector4 lookAtWorldPos = { 0.f, 0.0f, 0.f, 1.f };
+    constexpr float fov = biome::math::PI_ON_FOUR;
+    constexpr float nearPlane = 0.1f;
+    constexpr float farPlane = 5000.0f;
     const float aspectRatio = static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
 
     FirstPersonCamera camera = {};
@@ -201,20 +201,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         device::StartFrame(deviceHdl);
 
-		// Perform any copy operation before OnResourceCopyDone.
+        // Perform any copy operation before OnResourceCopyDone.
 
         // Update constant buffer
-		{
+        {
             Constants constants =
             {
                 camera.GetViewMatrix(),
                 camera.GetProjMatrix()
             };
 
-			void* pConstantBufferData = device::MapBuffer(deviceHdl, constantBufferHdl);
-			memcpy(pConstantBufferData, &constants, sizeof(constants));
-			device::UnmapBuffer(deviceHdl, constantBufferHdl);
-		}
+            void* pConstantBufferData = device::MapBuffer(deviceHdl, constantBufferHdl);
+            memcpy(pConstantBufferData, &constants, sizeof(constants));
+            device::UnmapBuffer(deviceHdl, constantBufferHdl);
+        }
 
         device::OnResourceUpdatesDone(deviceHdl);
 

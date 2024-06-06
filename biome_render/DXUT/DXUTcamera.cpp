@@ -309,22 +309,22 @@ void CBaseCamera::UpdateMouseDelta()
 
         if (foregroundHwnd == activeHwnd)
         {
-			const HMONITOR monitorHnd = MonitorFromWindow(activeHwnd, MONITOR_DEFAULTTOPRIMARY);
-			MONITORINFO monitorInfo = {};
-			monitorInfo.cbSize = sizeof(MONITORINFO);
-			if (GetMonitorInfo(monitorHnd, &monitorInfo))
-			{
-				// Set position of camera to center of desktop, 
-				// so it always has room to move.  This is very useful
-				// if the cursor is hidden.  If this isn't done and cursor is hidden, 
-				// then invisible cursor will hit the edge of the screen 
-				// and the user can't tell what happened
-				POINT ptCenter = {};
-				ptCenter.x = (monitorInfo.rcMonitor.left + monitorInfo.rcMonitor.right) / 2;
-				ptCenter.y = (monitorInfo.rcMonitor.top + monitorInfo.rcMonitor.bottom) / 2;
-				SetCursorPos(ptCenter.x, ptCenter.y);
-				m_ptLastMousePosition = ptCenter;
-			}
+            const HMONITOR monitorHnd = MonitorFromWindow(activeHwnd, MONITOR_DEFAULTTOPRIMARY);
+            MONITORINFO monitorInfo = {};
+            monitorInfo.cbSize = sizeof(MONITORINFO);
+            if (GetMonitorInfo(monitorHnd, &monitorInfo))
+            {
+                // Set position of camera to center of desktop, 
+                // so it always has room to move.  This is very useful
+                // if the cursor is hidden.  If this isn't done and cursor is hidden, 
+                // then invisible cursor will hit the edge of the screen 
+                // and the user can't tell what happened
+                POINT ptCenter = {};
+                ptCenter.x = (monitorInfo.rcMonitor.left + monitorInfo.rcMonitor.right) / 2;
+                ptCenter.y = (monitorInfo.rcMonitor.top + monitorInfo.rcMonitor.bottom) / 2;
+                SetCursorPos(ptCenter.x, ptCenter.y);
+                m_ptLastMousePosition = ptCenter;
+            }
         }
     }
 
