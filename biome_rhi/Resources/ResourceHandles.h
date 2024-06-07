@@ -56,6 +56,7 @@ namespace biome
         DefineHandle(GfxPipelineHandle);
         DefineHandle(ComputePipelineHandle);
         DefineHandle(DescriptorHeapHandle);
+        DefineHandle(AccelerationStructureHandle);
 
         typedef uintptr_t WindowHandle;
         typedef uintptr_t AppHandle;

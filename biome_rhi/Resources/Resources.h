@@ -69,6 +69,11 @@ namespace biome::rhi
             biome::rhi::descriptors::Format m_format { biome::rhi::descriptors::Format::Unknown };
         };
 
+        struct RtAccelerationStructure : public Resource
+        {
+
+        };
+
         struct GpuDevice
         {
             static constexpr uint32_t                       UploadHeapByteSize = MiB(128);

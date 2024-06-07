@@ -8,6 +8,7 @@ namespace biome::rhi::descriptors
     struct ShaderResourceLayoutDesc;
     struct GfxPipelineDesc;
     struct ComputePipelineDesc;
+    struct RayTracingInstanceDesc;
     enum class Format;
 }
 
@@ -60,6 +61,10 @@ namespace biome::rhi
                                         const bool allowRtv,
                                         const bool allowDsv,
                                         const bool allowUav);
+
+        AccelerationStructureHandle CreateRtAccelerationStructure(
+                                        const RayTracingInstanceDesc* const pRtInstances, 
+                                        const uint32_t instanceCount);
 
         void*                       MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
         void                        UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);

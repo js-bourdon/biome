@@ -188,6 +188,7 @@
     <ClInclude Include="Descriptors\PipelineDesc.h" />
     <ClInclude Include="Descriptors\Formats.h" />
     <ClInclude Include="Descriptors\RasterizerStateDesc.h" />
+    <ClInclude Include="Descriptors\Raytracing.h" />
     <ClInclude Include="Descriptors\Rectangle.h" />
     <ClInclude Include="Descriptors\ResourceUsage.h" />
     <ClInclude Include="Descriptors\SamplerStateDesc.h" />

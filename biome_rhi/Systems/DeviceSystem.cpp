@@ -5,6 +5,7 @@
 #include "biome_rhi/Dependencies/d3d12.h"
 #include "biome_rhi/Descriptors/ShaderResourceLayoutDesc.h"
 #include "biome_rhi/Descriptors/PipelineDesc.h"
+#include "biome_rhi/Descriptors/Raytracing.h"
 #include "biome_rhi/Resources/Resources.h"
 #include "biome_rhi/Systems/SystemUtils.h"
 #include "biome_core/DataStructures/Vector.h"
@@ -1319,6 +1320,37 @@ TextureHandle device::CreateTexture(
 
     Texture* pTexture = spTexture.release();
     return AsHandle<TextureHandle>(pTexture);
+}
+
+AccelerationStructureHandle device::CreateRtAccelerationStructure(
+    const RayTracingInstanceDesc* const pRtInstances,
+    const uint32_t instanceCount)
+{
+    std::unique_ptr<RtAccelerationStructure> spAs = std::make_unique<RtAccelerationStructure>();
+
+    for (uint32_t i = 0; i < instanceCount; ++i)
+    {
+        const RayTracingInstanceDesc& rtDesc = pRtInstances[i];
+        const Buffer* const pIndexBuffer = AsType<Buffer>(rtDesc.m_IndexBuffer);
+        const Buffer* const pVertexPosBuffer = AsType<Buffer>(rtDesc.m_VertexPosBuffer);
+
+        D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
+        geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+        geometryDesc.Flags = rtDesc.m_IsOpaque ? D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE : D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
+        geometryDesc.Triangles.IndexBuffer = pIndexBuffer->m_pResource->GetGPUVirtualAddress();
+        geometryDesc.Triangles.IndexCount = pIndexBuffer->m_byteSize / pIndexBuffer->m_stride;
+        geometryDesc.Triangles.IndexFormat = ToNativeFormat(pIndexBuffer->m_format);
+        geometryDesc.Triangles.Transform3x4 = 0;
+        geometryDesc.Triangles.VertexFormat = ToNativeFormat(pVertexPosBuffer->m_format);
+        geometryDesc.Triangles.VertexCount = pVertexPosBuffer->m_byteSize / pVertexPosBuffer->m_stride;
+        geometryDesc.Triangles.VertexBuffer.StartAddress = pVertexPosBuffer->m_pResource->GetGPUVirtualAddress();
+        geometryDesc.Triangles.VertexBuffer.StrideInBytes = pVertexPosBuffer->m_stride;
+
+
+    }
+
+    RtAccelerationStructure* pAs = spAs.release();
+    return AsHandle<AccelerationStructureHandle>(pAs);
 }
 
 void* device::MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)

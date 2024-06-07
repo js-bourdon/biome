@@ -119,7 +119,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             BufferType::Vertex, 
             static_cast<uint32_t>(vertexBufferPos.m_byteSize), 
             static_cast<uint32_t>(vertexBufferPos.m_byteStride), 
-            Format::Unknown);
+            Format::R32G32B32_FLOAT);
 
     const BufferHandle vertexBufferNormalHdl = 
         device::CreateBuffer(
@@ -127,7 +127,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             BufferType::Vertex, 
             static_cast<uint32_t>(vertexBufferNormal.m_byteSize), 
             static_cast<uint32_t>(vertexBufferNormal.m_byteStride), 
-            Format::Unknown);
+            Format::R32G32B32_FLOAT);
 
     const BufferHandle vertexBufferUvHdl =
         device::CreateBuffer(
@@ -135,7 +135,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             BufferType::Vertex,
             static_cast<uint32_t>(vertexBufferUv.m_byteSize),
             static_cast<uint32_t>(vertexBufferUv.m_byteStride),
-            Format::Unknown);
+            Format::R32G32_FLOAT);
 
     const BufferHandle constantBufferHdl = 
         device::CreateBuffer(
