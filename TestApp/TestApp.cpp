@@ -90,6 +90,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     const Texture* pTextures = GetTextures(pAssetDb);
     const Mesh* pMeshes = GetMeshes(pAssetDb);
     BIOME_ASSERT(pAssetDb->m_header.m_meshCount > 0);
+    BIOME_ASSERT(pAssetDb->m_header.m_textureCount > 0);
 
     const Mesh& mesh = pMeshes[0];
     BIOME_ASSERT(mesh.m_subMeshCount > 0);
@@ -97,17 +98,52 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     const SubMesh& subMesh = mesh.m_subMeshes[0];
     const BufferView indexBuffer = subMesh.m_indexBuffer;
     BIOME_ASSERT(subMesh.m_streamCount > 0);
-    const VertexStream vertexBuffer = subMesh.m_streams[0];
+    const VertexStream& vertexBufferPos = subMesh.m_streams[0];
+    const VertexStream& vertexBufferNormal = subMesh.m_streams[1];
+    const VertexStream& vertexBufferUv = subMesh.m_streams[3];
 
     const StaticArray<uint8_t> buffers = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Buffers.bin");
+    const StaticArray<uint8_t> textures = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Textures.bin");
 
-    const uint32_t indexBufferSize = static_cast<uint32_t>(indexBuffer.m_byteSize);
-    const uint32_t vertexBufferSize = static_cast<uint32_t>(vertexBuffer.m_byteSize);
-    const uint32_t constantBufferSize = static_cast<uint32_t>(sizeof(Constants));
+    const BufferHandle indexBufferHdl = 
+        device::CreateBuffer(
+            deviceHdl, 
+            BufferType::Index, 
+            static_cast<uint32_t>(indexBuffer.m_byteSize), 
+            static_cast<uint32_t>(indexBuffer.m_byteStride),
+            Format::R32_UINT);
 
-    const BufferHandle indexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Index, indexBufferSize, 4u, Format::R32_UINT);
-    const BufferHandle vertexBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Vertex, vertexBufferSize, 12u, Format::Unknown);
-    const BufferHandle constantBufferHdl = device::CreateBuffer(deviceHdl, BufferType::Constant, constantBufferSize, 0u, Format::Unknown);
+    const BufferHandle vertexBufferPosHdl = 
+        device::CreateBuffer(
+            deviceHdl, 
+            BufferType::Vertex, 
+            static_cast<uint32_t>(vertexBufferPos.m_byteSize), 
+            static_cast<uint32_t>(vertexBufferPos.m_byteStride), 
+            Format::Unknown);
+
+    const BufferHandle vertexBufferNormalHdl = 
+        device::CreateBuffer(
+            deviceHdl, 
+            BufferType::Vertex, 
+            static_cast<uint32_t>(vertexBufferNormal.m_byteSize), 
+            static_cast<uint32_t>(vertexBufferNormal.m_byteStride), 
+            Format::Unknown);
+
+    const BufferHandle vertexBufferUvHdl =
+        device::CreateBuffer(
+            deviceHdl,
+            BufferType::Vertex,
+            static_cast<uint32_t>(vertexBufferUv.m_byteSize),
+            static_cast<uint32_t>(vertexBufferUv.m_byteStride),
+            Format::Unknown);
+
+    const BufferHandle constantBufferHdl = 
+        device::CreateBuffer(
+            deviceHdl, 
+            BufferType::Constant, 
+            static_cast<uint32_t>(sizeof(Constants)), 
+            0u, 
+            Format::Unknown);
 
     constexpr bool allowRtv = false;
     constexpr bool allowDsv = true;
@@ -116,14 +152,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     const TextureHandle depthBufferHdl = device::CreateTexture(deviceHdl, windowWidth, windowHeight, dsvFormat, allowRtv, allowDsv, allowUav);
 
-    void* pIndexBufferData = device::MapBuffer(deviceHdl, indexBufferHdl);
-    void* pVertexBufferData = device::MapBuffer(deviceHdl, vertexBufferHdl);
+    void* const pIndexBufferData = device::MapBuffer(deviceHdl, indexBufferHdl);
+    void* const pVertexBufferPosData = device::MapBuffer(deviceHdl, vertexBufferPosHdl);
+    void* const pVertexBufferNormalData = device::MapBuffer(deviceHdl, vertexBufferNormalHdl);
+    void* const pVertexBufferUvData = device::MapBuffer(deviceHdl, vertexBufferUvHdl);
 
     memcpy(pIndexBufferData, buffers.Data() + indexBuffer.m_byteOffset, indexBuffer.m_byteSize);
-    memcpy(pVertexBufferData, buffers.Data() + vertexBuffer.m_byteOffset, vertexBuffer.m_byteSize);
+    memcpy(pVertexBufferPosData, buffers.Data() + vertexBufferPos.m_byteOffset, vertexBufferPos.m_byteSize);
+    memcpy(pVertexBufferNormalData, buffers.Data() + vertexBufferNormal.m_byteOffset, vertexBufferNormal.m_byteSize);
+    memcpy(pVertexBufferUvData, buffers.Data() + vertexBufferUv.m_byteOffset, vertexBufferUv.m_byteSize);
 
     device::UnmapBuffer(deviceHdl, indexBufferHdl);
-    device::UnmapBuffer(deviceHdl, vertexBufferHdl);
+    device::UnmapBuffer(deviceHdl, vertexBufferPosHdl);
+    device::UnmapBuffer(deviceHdl, vertexBufferNormalHdl);
+    device::UnmapBuffer(deviceHdl, vertexBufferUvHdl);
 
     constexpr uint32_t backBufferCount = 2;
     const SwapChainHandle swapChainHdl = device::CreateSwapChain(deviceHdl, hwnd, windowWidth, windowHeight);
@@ -160,7 +202,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             0, // SemanticIndex;
             0, // Slot;
             biome::rhi::descriptors::Format::R32G32B32_FLOAT
-        } 
+        },
+        InputLayoutElement
+        {
+            InputLayoutSemantic::Normal,
+            0, // SemanticIndex;
+            1, // Slot;
+            biome::rhi::descriptors::Format::R32G32B32_FLOAT
+        },
+        InputLayoutElement
+        {
+            InputLayoutSemantic::UV,
+            0, // SemanticIndex;
+            2, // Slot;
+            biome::rhi::descriptors::Format::R32G32_FLOAT
+        }
     };
 
     const GfxPipelineHandle gfxPipeHdl = device::CreateGraphicsPipeline(deviceHdl, pipelineDesc);
@@ -234,7 +290,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         commands::ResourceTransition(cmdBufferHdl, &transition, 1);
 
         commands::SetIndexBuffer(cmdBufferHdl, indexBufferHdl);
-        commands::SetVertexBuffers(cmdBufferHdl, 0, 1, &vertexBufferHdl);
+
+        const BufferHandle vertexStreams[] = { vertexBufferPosHdl, vertexBufferNormalHdl, vertexBufferUvHdl };
+        commands::SetVertexBuffers(cmdBufferHdl, 0, std::extent<decltype(vertexStreams)>::value, vertexStreams);
 
         commands::ClearRenderTarget(cmdBufferHdl, backBufferHdl, { 0.f, 0.5f, 0.f ,0.f });
         commands::ClearDepthStencil(cmdBufferHdl, depthBufferHdl);

@@ -71,6 +71,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="Shaders\basic_common.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Shaders\root_signature.hlsl">

@@ -169,7 +169,7 @@ void commands::ClearDepthStencil(CommandBufferHandle cmdBufferHdl, TextureHandle
     Texture* pDepthStencilTexture = AsType<Texture>(depthStencilHdl);
 
     constexpr D3D12_CLEAR_FLAGS clearFlags = D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL;
-	pCmdBuffer->m_pCmdList->ClearDepthStencilView(pDepthStencilTexture->m_cbdbHandle, clearFlags, 1.f, 0, 0, nullptr);
+    pCmdBuffer->m_pCmdList->ClearDepthStencilView(pDepthStencilTexture->m_cbdbHandle, clearFlags, 1.f, 0, 0, nullptr);
 }
 
 void commands::ClearRenderTarget(CommandBufferHandle cmdBufferHdl, TextureHandle renderTargetHdl, Vector4 clearColor)
