@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.props')" />
-  <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.600.10\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.600.10\build\native\Microsoft.Direct3D.D3D12.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -232,8 +231,17 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.600.10\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.600.10\build\native\Microsoft.Direct3D.D3D12.targets')" />
     <Import Project="..\packages\directxmath.2021.1.11.2\build\native\directxmath.targets" Condition="Exists('..\packages\directxmath.2021.1.11.2\build\native\directxmath.targets')" />
     <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.targets')" />
   </ImportGroup>
+  <ItemGroup>
+    <Content Include="..\packages\Microsoft.Direct3D.WARP.1.0.12\build\native\bin\x64\d3d10warp.dll" Condition="Exists('..\packages\Microsoft.Direct3D.WARP.1.0.12\build\native\bin\x64\d3d10warp.dll')">
+      <Link>%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\packages\Microsoft.Direct3D.WARP.1.0.12\build\native\bin\x64\d3d10warp.pdb" Condition="Exists('..\packages\Microsoft.Direct3D.WARP.1.0.12\build\native\bin\x64\d3d10warp.pdb')">
+      <Link>%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

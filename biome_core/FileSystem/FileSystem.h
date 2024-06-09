@@ -28,7 +28,10 @@ namespace biome
         StaticArray<uint8_t, false, AllocatorType> ReadFileContent(const char* pSrcPath);
 
         str_smart_ptr ExtractDirectoryPath(const char* pFilePath);
+        wstr_smart_ptr ExtractDirectoryPath(const wchar_t* pFilePath);
         str_smart_ptr AppendPaths(const char* pDirectoryPath, const char* pFilePath);
+        wstr_smart_ptr AppendPaths(const wchar_t* pDirectoryPath, const wchar_t* pFilePath);
+        wstr_smart_ptr GetExecutableDirectory();
     }
 }
 

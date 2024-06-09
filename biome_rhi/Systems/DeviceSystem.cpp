@@ -666,7 +666,7 @@ GpuDeviceHandle device::CreateDevice(const uint32_t framesOfLatency, const bool 
     }
 
     {
-        LibraryHandle libraryHdl = LibraryLoader::Load(L"dxgidebug.dll");
+        LibraryHandle libraryHdl = LibraryLoader::Load(L"dxgidebug");
         if (libraryHdl)
         {
             typedef HRESULT(WINAPI* LPDXGIGETDEBUGINTERFACE)(REFIID, void**);
@@ -692,6 +692,10 @@ GpuDeviceHandle device::CreateDevice(const uint32_t framesOfLatency, const bool 
 
     if (useCpuEmulation)
     {
+        const wstr_smart_ptr exeDir = filesystem::GetExecutableDirectory();
+		const wstr_smart_ptr warpPath = filesystem::AppendPaths(exeDir, L"d3d10warp");
+        LibraryLoader::Load(warpPath);
+
         if (FAILED(factory->EnumWarpAdapter(IID_PPV_ARGS(adapter.GetAddressOf()))))
         {
             return Handle_NULL;

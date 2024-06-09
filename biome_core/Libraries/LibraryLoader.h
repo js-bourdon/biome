@@ -25,8 +25,6 @@ namespace biome
 
         private:
 
-            // Platform-dependent implementations required.
-            // Look into `Library/Implementations/<platform>.inl`
             static LibraryHandle LoadDynamicLibrary(const wchar_t *name);
             static void UnloadDynamicLibrary(LibraryHandle handle);
             static void* GetFunctionAddress(LibraryHandle lib, const char *functionName);

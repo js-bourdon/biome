@@ -6,7 +6,7 @@
 using namespace biome::rhi;
 using namespace biome::external;
 
-static wchar_t g_LibraryFileName[32];
+static wchar_t g_LibraryFileName[2048];
 
 ///////////////////////////////////////////////////////////////////////////
 // LibraryLoader
