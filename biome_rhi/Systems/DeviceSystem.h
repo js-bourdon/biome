@@ -21,7 +21,7 @@ namespace biome::rhi
 
     namespace device
     {
-        GpuDeviceHandle             CreateDevice(uint32_t framesOfLatency);
+        GpuDeviceHandle             CreateDevice(const uint32_t framesOfLatency, const bool useCpuEmulation);
         CommandBufferHandle         CreateCommandBuffer(GpuDeviceHandle deviceHdl, CommandType type);
 
         SwapChainHandle             CreateSwapChain(
@@ -38,6 +38,7 @@ namespace biome::rhi
         uint64_t                    GetCurrentFrameIndex(GpuDeviceHandle deviceHdl);
         Format                      GetSwapChainFormat(SwapChainHandle hdl);
         TextureHandle               GetBackBuffer(GpuDeviceHandle deviceHdl, SwapChainHandle hdl);
+        bool                        IsRaytracingSupported(GpuDeviceHandle deviceHdl);
 
         ShaderHandle                CreateShader(GpuDeviceHandle deviceHdl, const char* pFilePath);
         ShaderResourceLayoutHandle  CreateShaderResourceLayout(GpuDeviceHandle deviceHdl, const ShaderResourceLayoutDesc& desc);

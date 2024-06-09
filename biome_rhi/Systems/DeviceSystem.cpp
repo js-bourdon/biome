@@ -645,7 +645,7 @@ void device::OnResourceUpdatesDone(GpuDeviceHandle deviceHdl)
     BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pGfxCmdQueue->Wait(pGpuDevice->m_pCopyFence.Get(), currentFrame)));
 }
 
-GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
+GpuDeviceHandle device::CreateDevice(const uint32_t framesOfLatency, const bool useCpuEmulation)
 {
     GpuDeviceHandle deviceHdl = Handle_NULL;
     UINT dxgiFactoryFlags = 0;
@@ -688,10 +688,21 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
         return Handle_NULL;
     }
 
-    ComPtr<IDXGIAdapter1> hardwareAdapter;
-    if (!GetHardwareAdapter(factory.Get(), &hardwareAdapter))
+    ComPtr<IDXGIAdapter1> adapter;
+
+    if (useCpuEmulation)
     {
-        return Handle_NULL;
+        if (FAILED(factory->EnumWarpAdapter(IID_PPV_ARGS(adapter.GetAddressOf()))))
+        {
+            return Handle_NULL;
+        }
+    }
+    else
+    {
+		if (!GetHardwareAdapter(factory.Get(), &adapter))
+		{
+			return Handle_NULL;
+		}
     }
 
     ComPtr<ID3D12Device> pDevice {};
@@ -703,7 +714,7 @@ GpuDeviceHandle device::CreateDevice(uint32_t framesOfLatency)
     ComPtr<IDXGIDebug> pDebug {};
 
     if (FAILED(D3D12CreateDevice(
-        hardwareAdapter.Get(),
+        adapter.Get(),
         D3D_FEATURE_LEVEL_12_1,
         IID_PPV_ARGS(pDevice.ReleaseAndGetAddressOf()))))
     {
@@ -942,6 +953,14 @@ TextureHandle device::GetBackBuffer(GpuDeviceHandle deviceHdl, SwapChainHandle h
     }
 
     return Handle_NULL;
+}
+
+bool device::IsRaytracingSupported(GpuDeviceHandle deviceHdl)
+{
+    GpuDevice* const pGpuDevice = AsType<GpuDevice>(deviceHdl);
+    D3D12_FEATURE_DATA_D3D12_OPTIONS5 featureSupportData = {};
+    return SUCCEEDED(pGpuDevice->m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &featureSupportData, sizeof(featureSupportData))) && 
+        featureSupportData.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
 }
 
 ShaderHandle device::CreateShader(GpuDeviceHandle /*deviceHdl*/, const char* pFilePath)

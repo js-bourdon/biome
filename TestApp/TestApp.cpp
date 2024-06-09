@@ -83,7 +83,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     factory::DisplayWindow(hwnd);
 
     constexpr uint32_t framesOfLatency = 1;
-    const GpuDeviceHandle deviceHdl = device::CreateDevice(framesOfLatency);
+    constexpr bool useCpuEmulation = false;
+    const GpuDeviceHandle deviceHdl = device::CreateDevice(framesOfLatency, useCpuEmulation);
     
     // Assets loading
     AssetDatabase* pAssetDb = LoadDatabase("Media/builds/star_trek_danube_class/StartTrek.db");

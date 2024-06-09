@@ -198,5 +198,6 @@
     <None Include="DataStructures\StaticArray.inl">
       <Filter>src\DataStructures</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
