@@ -83,20 +83,11 @@ void commands::SetComputeConstant(CommandBufferHandle cmdBufferHdl, uint32_t ind
 
 }
 
-void commands::SetDescriptorHeaps(CommandBufferHandle cmdBufferHdl, uint32_t count, const DescriptorHeapHandle* pHeapHdls)
+void commands::SetDescriptorHeaps(CommandBufferHandle cmdBufferHdl)
 {
-    BIOME_ASSERT(count >= 1 && count <= 2);
     CommandBuffer* pCmdBuffer = AsType<CommandBuffer>(cmdBufferHdl);
-    ID3D12DescriptorHeap* heaps[2];
-    const uint32_t finalCount = std::min(2u, count);
-
-    for (uint32_t heapIndex = 0; heapIndex < finalCount; ++heapIndex)
-    {
-        DescriptorHeap* const pDescriptorHeap = AsType<DescriptorHeap>(pHeapHdls[heapIndex]);
-        heaps[heapIndex] = pDescriptorHeap->m_pDescriptorHeap.Get();
-    }
-
-    pCmdBuffer->m_pCmdList->SetDescriptorHeaps(finalCount, heaps);
+    ID3D12DescriptorHeap* pViewHeap = pCmdBuffer->m_pViewDescriptorHeap->m_pDescriptorHeap.Get();
+    pCmdBuffer->m_pCmdList->SetDescriptorHeaps(1, &pViewHeap);
 }
 
 void commands::SetGraphicsConstantBuffer(const CommandBufferHandle cmdBufferHdl, const BufferHandle cbvHandle, const uint32_t index)

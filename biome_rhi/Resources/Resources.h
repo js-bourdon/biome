@@ -43,6 +43,7 @@ namespace biome::rhi
         {
             typedef biome::data::StaticArray<ComPtr<ID3D12CommandAllocator>, CleanConstructDestruct> AllocatorArray;
 
+            DescriptorHeap*                     m_pViewDescriptorHeap { nullptr };
             AllocatorArray                      m_cmdAllocators {};
             ComPtr<ID3D12GraphicsCommandList>   m_pCmdList { nullptr };
             CommandType                         m_type {};

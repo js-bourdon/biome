@@ -71,9 +71,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     worker1.Init();
 
     worker0.Run(1000);
-    worker1.Run(100);
-
     const int value0 = worker0.Wait();
+
+    worker1.Run(100);
     const int value1 = worker1.Wait();
 
     constexpr uint32_t windowWidth = 1980;
@@ -277,6 +277,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         const TextureHandle backBufferHdl = device::GetBackBuffer(deviceHdl, swapChainHdl);
 
+        commands::SetDescriptorHeaps(cmdBufferHdl);
         commands::SetGraphicsShaderResourceLayout(cmdBufferHdl, rscLayoutHdl);
         commands::SetGfxPipeline(cmdBufferHdl, gfxPipeHdl);
         commands::SetPrimitiveTopology(cmdBufferHdl, PrimitiveTopology::TriangleList);

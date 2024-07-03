@@ -21,9 +21,7 @@
 #include <limits>
 #include <memory>
 
-#include <d3d12.h>
 #include <d3dx12/d3dx12_root_signature.h>
-#include <dxgi1_6.h>
 
 #include "biome_core/Core/Defines.h"
 #include "biome_rhi/Resources/ResourceHandles.h"
