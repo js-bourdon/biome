@@ -72,9 +72,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     worker0.Run(1000);
     const int value0 = worker0.Wait();
+    BIOME_ASSERT(value0 == 499500);
 
     worker1.Run(100);
     const int value1 = worker1.Wait();
+    BIOME_ASSERT(value1 == 4950);
 
     constexpr uint32_t windowWidth = 1980;
     constexpr uint32_t windowHeight = 1080;

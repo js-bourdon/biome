@@ -29,6 +29,7 @@ namespace biome
         public:
 
             typedef ReturnType(*FunctionType)(ArgumentTypes...);
+            typedef void(*CallbackType)(const WorkerThread*, ReturnType);
 
             WorkerThread(FunctionType threadFunction, size_t heapByteSize, size_t initialCommitByteSize);
             ~WorkerThread();
@@ -37,6 +38,7 @@ namespace biome
             void Shutdown();
 
             void Run(ArgumentTypes... args);
+            void Run(CallbackType callbackFunction, ArgumentTypes... args);
             ReturnType Wait();
 
         private:
@@ -46,6 +48,7 @@ namespace biome
             void Execute();
 
             FunctionType m_Function;
+            CallbackType m_Callback { nullptr };
             ReturnType m_ReturnedArg {};
             std::tuple<ArgumentTypes...> m_Arguments;
 
@@ -53,7 +56,9 @@ namespace biome
             std::mutex m_Mutex {};
             std::condition_variable m_CondValue {};
 
-            bool m_Running { false };
+            uint64_t m_RunIndex { 0 };
+            uint64_t m_NextRunIndex { 0 };
+            bool m_Executing { false };
         };
     }
 }
@@ -79,17 +84,18 @@ template<typename ReturnType, typename ...ArgumentTypes>
 void WorkerThread<ReturnType(ArgumentTypes...)>::Init()
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
-
-    if (!m_Running)
-    {
-        m_CondValue.wait(lck);
-    }
+    m_CondValue.wait(lck, [&]{ return m_Executing; });
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
 void WorkerThread<ReturnType(ArgumentTypes...)>::Shutdown()
 {
-    m_Running = false;
+    {
+        std::lock_guard<std::mutex> lck(m_Mutex);
+        m_Executing = false;
+        ++m_NextRunIndex;
+    }
+
     m_CondValue.notify_all();
     m_Thread.join();
 }
@@ -97,8 +103,19 @@ void WorkerThread<ReturnType(ArgumentTypes...)>::Shutdown()
 template<typename ReturnType, typename ...ArgumentTypes>
 void WorkerThread<ReturnType(ArgumentTypes...)>::Run(ArgumentTypes... args)
 {
-    std::unique_lock<std::mutex> lck(m_Mutex);
-    m_Arguments = std::make_tuple(args...);
+    Run(nullptr, std::forward<ArgumentTypes>(args)...);
+}
+
+template<typename ReturnType, typename ...ArgumentTypes>
+void WorkerThread<ReturnType(ArgumentTypes...)>::Run(CallbackType callbackFunction, ArgumentTypes... args)
+{
+    {
+        std::lock_guard<std::mutex> lck(m_Mutex);
+        m_Arguments = std::make_tuple(args...);
+        m_Callback = callbackFunction;
+        ++m_NextRunIndex;
+    }
+    
     m_CondValue.notify_all();
 }
 
@@ -106,6 +123,7 @@ template<typename ReturnType, typename ...ArgumentTypes>
 ReturnType WorkerThread<ReturnType(ArgumentTypes...)>::Wait()
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
+    m_CondValue.wait(lck, [&] { return m_RunIndex == m_NextRunIndex; });
     return m_ReturnedArg;
 }
 
@@ -119,16 +137,29 @@ void WorkerThread<ReturnType(ArgumentTypes...)>::ThreadMain(WorkerThread *thisTh
 template<typename ReturnType, typename ...ArgumentTypes>
 void WorkerThread<ReturnType(ArgumentTypes...)>::Execute()
 {
-    std::unique_lock<std::mutex> lck(m_Mutex);
-
-    m_Running = true;
+    {
+        std::lock_guard<std::mutex> execLock(m_Mutex);
+        m_Executing = true;
+    }
+    
     m_CondValue.notify_all();
-    m_CondValue.wait(lck);
 
-    while (m_Running)
+    std::unique_lock<std::mutex> lck(m_Mutex);
+    m_CondValue.wait(lck, [&] { return m_RunIndex < m_NextRunIndex; });
+
+    while (m_Executing)
     {
         m_ReturnedArg = std::apply(m_Function, m_Arguments);
-        m_CondValue.wait(lck);
+
+        if (m_Callback) 
+        {
+            (*m_Callback)(this, m_ReturnedArg);
+        }
+
+        m_RunIndex = m_NextRunIndex;
+
+        m_CondValue.notify_all();
+        m_CondValue.wait(lck, [&] { return m_RunIndex < m_NextRunIndex; });
     }
 
     ThreadHeapAllocator::Shutdown();
