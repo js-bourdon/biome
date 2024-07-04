@@ -95,3 +95,28 @@ void StaticArray<ValueType, CleanConstructDelete, AllocatorType>::operator=(Stat
     other.m_pData = nullptr;
     other.m_size = 0;
 }
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+ValueType* StaticArray<ValueType, CleanConstructDelete, AllocatorType>::begin()
+{
+    return m_pData;
+}
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+ValueType* StaticArray<ValueType, CleanConstructDelete, AllocatorType>::end()
+{
+    return m_pData + m_size;
+}
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+const ValueType* StaticArray<ValueType, CleanConstructDelete, AllocatorType>::cbegin() const
+{
+    return m_pData;
+}
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+const ValueType* StaticArray<ValueType, CleanConstructDelete, AllocatorType>::cend() const
+{
+    return m_pData + m_size;
+}
+

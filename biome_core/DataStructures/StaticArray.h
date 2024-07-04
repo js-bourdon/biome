@@ -30,6 +30,16 @@ namespace biome
                 SetValues(static_cast<size_t>(0), std::forward<AddValueType>(values)...);
             }
 
+            template<typename... Args>
+            StaticArray(const size_t size, Args&&... args)
+                : StaticArray(size)
+            {
+                for (size_t index = 0; index < size; ++index)
+                {
+                    new (m_pData + index) ValueType(std::forward<Args>(args)...);
+                }
+            }
+
             ~StaticArray();
 
             ValueType*          Data();
@@ -39,6 +49,11 @@ namespace biome
             ValueType&          operator[](size_t index);
             const ValueType&    operator[](size_t index) const;
             void                operator=(StaticArray<ValueType, CleanConstructDelete, AllocatorType>&& other) noexcept;
+
+            ValueType*          begin();
+            ValueType*          end();
+            const ValueType*    cbegin() const;
+            const ValueType*    cend() const;
 
         private:
 

@@ -12,6 +12,8 @@
 #include "biome_core/Memory/VirtualMemoryAllocator.h"
 #include "biome_core/Memory/ThreadHeapAllocator.h"
 #include "biome_core/Threading/WorkerThread.h"
+#include "biome_core/Threading/WorkerTask.h"
+#include "biome_core/Threading/WorkerThreadPool.h"
 #include "biome_core/Assets/AssetDatabase.h"
 #include "biome_core/FileSystem/FileSystem.h"
 #include "biome_core/Time/Timer.h"
@@ -33,10 +35,10 @@ using namespace biome::asset;
 using namespace biome::render;
 using namespace std::chrono_literals;
 
-static int WorkerFunction(int iterationCount)
+static uint64_t WorkerFunction(uint32_t iterationCount)
 {
-    int total = 0;
-    for (int i = 0; i < iterationCount; ++i)
+    uint64_t total = 0;
+    for (uint32_t i = 0; i < iterationCount; ++i)
     {
         total += i;
     }
@@ -44,7 +46,26 @@ static int WorkerFunction(int iterationCount)
     return total;
 }
 
-typedef int (WorkerFnctType)(int);
+typedef uint64_t (WorkerFnctType)(uint32_t);
+
+class TestTask : public WorkerTask
+{
+public:
+
+    void DoWork() override
+    {
+        value = WorkerFunction(1000000u);
+    }
+
+    void OnWorkDone() override
+    {
+        BIOME_ASSERT(value == 499999500000u);
+        done = true;
+    }
+
+    uint64_t value { 0 };
+    bool done { false };
+};
 
 // TODO: Remove hardcoded 256
 struct alignas(256) Constants
@@ -65,17 +86,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     BIOME_ASSERT_ALWAYS_EXEC(ThreadHeapAllocator::Initialize(GiB(1), MiB(100)));
 
+    TestTask tasks[3];
+
+    WorkerThreadPool threadPool(2, GiB(1), MiB(100));
+    threadPool.QueueTask(&tasks[0]);
+    threadPool.QueueTask(&tasks[1]);
+    threadPool.QueueTask(&tasks[2]);
+
     WorkerThread<WorkerFnctType> worker0(WorkerFunction, GiB(1), MiB(100));
     WorkerThread<WorkerFnctType> worker1(WorkerFunction, GiB(1), MiB(100));
     worker0.Init();
     worker1.Init();
 
     worker0.Run(1000);
-    const int value0 = worker0.Wait();
+    const uint64_t value0 = worker0.Wait();
     BIOME_ASSERT(value0 == 499500);
 
     worker1.Run(100);
-    const int value1 = worker1.Wait();
+    const uint64_t value1 = worker1.Wait();
     BIOME_ASSERT(value1 == 4950);
 
     constexpr uint32_t windowWidth = 1980;
@@ -315,6 +343,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         device::EndFrame(deviceHdl);
 
         //std::this_thread::sleep_for(100ms);
+    }
+
+    while (!tasks[0].done || !tasks[1].done || !tasks[2].done)
+    {
+        std::this_thread::sleep_for(10ms);
     }
 
     DestroyDatabase(pAssetDb);

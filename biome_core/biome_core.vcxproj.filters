@@ -134,6 +134,12 @@
     <ClInclude Include="Time\Timer.h">
       <Filter>src\Time</Filter>
     </ClInclude>
+    <ClInclude Include="Threading\WorkerTask.h">
+      <Filter>src\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Threading\WorkerThreadPool.h">
+      <Filter>src\Threading</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructures\IndexFreeList.cpp">
@@ -186,6 +192,9 @@
     </ClCompile>
     <ClCompile Include="Time\Timer.cpp">
       <Filter>src\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Threading\WorkerThreadPool.cpp">
+      <Filter>src\Threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

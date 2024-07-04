@@ -19,8 +19,10 @@ namespace biome
             ~Vector();
 
             uint32_t            Add(const ValueType& value);
-            ValueType&          Remove(uint32_t index);
+            void                Remove(uint32_t index);
+            ValueType           PopBack();
             ValueType*          Data();
+            ValueType*          Data() const;
             uint32_t            Size() const { return m_size; }
             void                Clear();
 

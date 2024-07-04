@@ -34,6 +34,9 @@ namespace biome
             WorkerThread(FunctionType threadFunction, size_t heapByteSize, size_t initialCommitByteSize);
             ~WorkerThread();
 
+            WorkerThread(const WorkerThread&) = delete;
+            WorkerThread& operator=(const WorkerThread&) = delete;
+
             void Init();
             void Shutdown();
 

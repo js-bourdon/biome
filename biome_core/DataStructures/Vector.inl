@@ -61,19 +61,43 @@ uint32_t Vector<ValueType, CleanConstructDelete, AllocatorType>::Add(const Value
 }
 
 template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
-ValueType& Vector<ValueType, CleanConstructDelete, AllocatorType>::Remove(uint32_t index)
+void Vector<ValueType, CleanConstructDelete, AllocatorType>::Remove(uint32_t index)
 {
     BIOME_ASSERT(index < m_size);
     const uint32_t startIndex = index + 1;
 
     for (uint32_t i = startIndex; i < m_size; ++i)
     {
-        m_pData[i - 1] = m_pData[i];
+        m_pData[i - 1] = std::move(m_pData[i]);
     }
+
+    if constexpr (CleanConstructDelete)
+    {
+        if (startIndex == m_size)
+        {
+            m_pData[m_size - 1].~ValueType();
+        }
+    }
+
+    --m_size;
+}
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+ValueType Vector<ValueType, CleanConstructDelete, AllocatorType>::PopBack()
+{
+    ValueType value = (*this)[m_size - 1];
+    Remove(m_size - 1);
+    return value;
 }
 
 template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
 ValueType* Vector<ValueType, CleanConstructDelete, AllocatorType>::Data()
+{
+    return m_pData;
+}
+
+template<typename ValueType, bool CleanConstructDelete, typename AllocatorType>
+ValueType* Vector<ValueType, CleanConstructDelete, AllocatorType>::Data() const
 {
     return m_pData;
 }
