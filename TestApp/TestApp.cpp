@@ -35,7 +35,7 @@ using namespace biome::asset;
 using namespace biome::render;
 using namespace std::chrono_literals;
 
-static uint64_t WorkerFunction(uint32_t iterationCount)
+static uint64_t WorkerFunction(uint32_t iterationCount) noexcept
 {
     uint64_t total = 0;
     for (uint32_t i = 0; i < iterationCount; ++i)
@@ -46,18 +46,16 @@ static uint64_t WorkerFunction(uint32_t iterationCount)
     return total;
 }
 
-typedef uint64_t (WorkerFnctType)(uint32_t);
-
 class TestTask : public WorkerTask
 {
 public:
 
-    void DoWork() override
+    void DoWork() noexcept override
     {
         value = WorkerFunction(1000000u);
     }
 
-    void OnWorkDone() override
+    void OnWorkDone() noexcept override
     {
         BIOME_ASSERT(value == 499999500000u);
         done = true;
@@ -93,8 +91,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     threadPool.QueueTask(&tasks[1]);
     threadPool.QueueTask(&tasks[2]);
 
-    WorkerThread<WorkerFnctType> worker0(WorkerFunction, GiB(1), MiB(100));
-    WorkerThread<WorkerFnctType> worker1(WorkerFunction, GiB(1), MiB(100));
+    //*
+    WorkerThread<decltype(WorkerFunction)> worker0(WorkerFunction, GiB(1), MiB(100));
+    WorkerThread<decltype(WorkerFunction)> worker1(WorkerFunction, GiB(1), MiB(100));
     worker0.Init();
     worker1.Init();
 
@@ -105,6 +104,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     worker1.Run(100);
     const uint64_t value1 = worker1.Wait();
     BIOME_ASSERT(value1 == 4950);
+    //*/
 
     constexpr uint32_t windowWidth = 1980;
     constexpr uint32_t windowHeight = 1080;

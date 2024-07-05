@@ -24,14 +24,16 @@ namespace biome
         // executes the function, notify any waiting thread and yields/sleeps/waits again.
         //
         template<typename ReturnType, typename ...ArgumentTypes>
-        class WorkerThread<ReturnType(ArgumentTypes...)>
+        class WorkerThread<ReturnType(ArgumentTypes...) noexcept>
         {
         public:
 
-            typedef ReturnType(*FunctionType)(ArgumentTypes...);
-            typedef void(*CallbackType)(const WorkerThread*, ReturnType);
+            static constexpr ReturnType(*fnctPtr)(ArgumentTypes...) noexcept = nullptr;
+            static constexpr void(*callbackPtr)(const WorkerThread*, ReturnType) noexcept = nullptr;
+            using FunctionPtrType = std::remove_const_t<decltype(fnctPtr)>;
+            using CallbackPtrType = std::remove_const_t<decltype(callbackPtr)>;
 
-            WorkerThread(FunctionType threadFunction, size_t heapByteSize, size_t initialCommitByteSize);
+            WorkerThread(FunctionPtrType threadFunction, size_t heapByteSize, size_t initialCommitByteSize);
             ~WorkerThread();
 
             WorkerThread(const WorkerThread&) = delete;
@@ -41,7 +43,7 @@ namespace biome
             void Shutdown();
 
             void Run(ArgumentTypes... args);
-            void Run(CallbackType callbackFunction, ArgumentTypes... args);
+            void Run(CallbackPtrType callbackFunction, ArgumentTypes... args);
             ReturnType Wait();
 
         private:
@@ -50,8 +52,8 @@ namespace biome
 
             void Execute();
 
-            FunctionType m_Function;
-            CallbackType m_Callback { nullptr };
+            FunctionPtrType m_Function;
+            CallbackPtrType m_Callback { nullptr };
             ReturnType m_ReturnedArg {};
             std::tuple<ArgumentTypes...> m_Arguments;
 
@@ -70,7 +72,7 @@ using namespace biome::threading;
 using namespace biome::memory;
 
 template<typename ReturnType, typename ...ArgumentTypes>
-WorkerThread<ReturnType(ArgumentTypes...)>::WorkerThread(FunctionType threadFunction, size_t heapByteSize, size_t initialCommitByteSize)
+WorkerThread<ReturnType(ArgumentTypes...) noexcept>::WorkerThread(FunctionPtrType threadFunction, size_t heapByteSize, size_t initialCommitByteSize)
     : m_Function(threadFunction)
     , m_Thread(ThreadMain, this, heapByteSize, initialCommitByteSize)
 { 
@@ -78,20 +80,20 @@ WorkerThread<ReturnType(ArgumentTypes...)>::WorkerThread(FunctionType threadFunc
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
-WorkerThread<ReturnType(ArgumentTypes...)>::~WorkerThread()
+WorkerThread<ReturnType(ArgumentTypes...) noexcept>::~WorkerThread()
 {
     Shutdown();
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
-void WorkerThread<ReturnType(ArgumentTypes...)>::Init()
+void WorkerThread<ReturnType(ArgumentTypes...) noexcept>::Init()
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
     m_CondValue.wait(lck, [&]{ return m_Executing; });
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
-void WorkerThread<ReturnType(ArgumentTypes...)>::Shutdown()
+void WorkerThread<ReturnType(ArgumentTypes...) noexcept>::Shutdown()
 {
     {
         std::lock_guard<std::mutex> lck(m_Mutex);
@@ -104,13 +106,13 @@ void WorkerThread<ReturnType(ArgumentTypes...)>::Shutdown()
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
-void WorkerThread<ReturnType(ArgumentTypes...)>::Run(ArgumentTypes... args)
+void WorkerThread<ReturnType(ArgumentTypes...) noexcept>::Run(ArgumentTypes... args)
 {
     Run(nullptr, std::forward<ArgumentTypes>(args)...);
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
-void WorkerThread<ReturnType(ArgumentTypes...)>::Run(CallbackType callbackFunction, ArgumentTypes... args)
+void WorkerThread<ReturnType(ArgumentTypes...) noexcept>::Run(CallbackPtrType callbackFunction, ArgumentTypes... args)
 {
     {
         std::lock_guard<std::mutex> lck(m_Mutex);
@@ -123,7 +125,7 @@ void WorkerThread<ReturnType(ArgumentTypes...)>::Run(CallbackType callbackFuncti
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
-ReturnType WorkerThread<ReturnType(ArgumentTypes...)>::Wait()
+ReturnType WorkerThread<ReturnType(ArgumentTypes...) noexcept>::Wait()
 {
     std::unique_lock<std::mutex> lck(m_Mutex);
     m_CondValue.wait(lck, [&] { return m_RunIndex == m_NextRunIndex; });
@@ -131,14 +133,14 @@ ReturnType WorkerThread<ReturnType(ArgumentTypes...)>::Wait()
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
-void WorkerThread<ReturnType(ArgumentTypes...)>::ThreadMain(WorkerThread *thisThread, size_t heapByteSize, size_t initialCommitByteSize)
+void WorkerThread<ReturnType(ArgumentTypes...) noexcept>::ThreadMain(WorkerThread *thisThread, size_t heapByteSize, size_t initialCommitByteSize)
 {
     BIOME_ASSERT_ALWAYS_EXEC(ThreadHeapAllocator::Initialize(heapByteSize, initialCommitByteSize));
     thisThread->Execute();
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>
-void WorkerThread<ReturnType(ArgumentTypes...)>::Execute()
+void WorkerThread<ReturnType(ArgumentTypes...) noexcept>::Execute()
 {
     {
         std::lock_guard<std::mutex> execLock(m_Mutex);

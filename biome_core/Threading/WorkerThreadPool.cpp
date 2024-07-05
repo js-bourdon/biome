@@ -33,13 +33,13 @@ void WorkerThreadPool::QueueTask(WorkerTask* const pTask)
     m_CondValue.notify_all();
 }
 
-WorkerThreadPool::Worker* WorkerThreadPool::DoWork(Worker* pWorker)
+WorkerThreadPool::Worker* WorkerThreadPool::DoWork(Worker* pWorker) noexcept
 {
     pWorker->m_pTask->DoWork();
     return pWorker;
 }
 
-void WorkerThreadPool::WorkDone(const WorkerThread<WorkerFnctType>* pThread, Worker* pWorker)
+void WorkerThreadPool::WorkDone(const WorkerType* pThread, Worker* pWorker) noexcept
 {
     pWorker->m_pThreadPool->OnWorkDone(pWorker);
 }
@@ -47,6 +47,7 @@ void WorkerThreadPool::WorkDone(const WorkerThread<WorkerFnctType>* pThread, Wor
 void WorkerThreadPool::OnWorkDone(Worker* const pWorker)
 {
     pWorker->m_pTask->OnWorkDone();
+    pWorker->m_pTask = nullptr;
 
     {
         std::lock_guard<std::mutex> lck(m_Mutex);

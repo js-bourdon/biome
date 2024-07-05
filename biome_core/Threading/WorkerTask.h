@@ -9,8 +9,8 @@ namespace biome
         public:
 
             // These will be called from a worker thread.
-            virtual void DoWork() = 0;
-            virtual void OnWorkDone() = 0;
+            virtual void DoWork() noexcept = 0;
+            virtual void OnWorkDone() noexcept = 0;
         };
     }
 }

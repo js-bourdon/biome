@@ -22,23 +22,24 @@ namespace biome
         private:
 
             struct Worker;
-            typedef Worker*(WorkerFnctType)(Worker*);
+            static Worker* DoWork(Worker* worker) noexcept;
+            using WorkerType = WorkerThread<decltype(DoWork)>;
+            using WorkerFnctPtrType = decltype(&DoWork);
+
+            static void WorkDone(const WorkerType* pThread, Worker* pWorker) noexcept;
+            static void DispatchTasks(WorkerThreadPool* pThreadPool, size_t perThreadHeapByteSize, size_t perThreadInitialCommitByteSize);
 
             struct Worker
             {
-                Worker(WorkerThreadPool* pThreadPool, WorkerFnctType workerFnct, size_t heapByteSize, size_t initialCommitByteSize)
+                Worker(WorkerThreadPool* pThreadPool, WorkerFnctPtrType workerFnct, size_t heapByteSize, size_t initialCommitByteSize)
                     : m_pThreadPool(pThreadPool)
                     , m_WorkerThread(workerFnct, heapByteSize, initialCommitByteSize)
                     , m_pTask(nullptr) {}
 
                 WorkerThreadPool* m_pThreadPool;
-                WorkerThread<WorkerFnctType> m_WorkerThread;
+                WorkerType m_WorkerThread;
                 WorkerTask* m_pTask;
             };
-
-            static Worker* DoWork(Worker* worker);
-            static void WorkDone(const WorkerThread<WorkerFnctType>* pThread, Worker* pWorker);
-            static void DispatchTasks(WorkerThreadPool* pThreadPool, size_t perThreadHeapByteSize, size_t perThreadInitialCommitByteSize);
 
             void OnWorkDone(Worker* const pWorker);
             void OnDispatchTasks();
