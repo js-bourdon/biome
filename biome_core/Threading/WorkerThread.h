@@ -102,7 +102,11 @@ void WorkerThread<ReturnType(ArgumentTypes...) noexcept>::Shutdown()
     }
 
     m_CondValue.notify_all();
-    m_Thread.join();
+
+    if (m_Thread.joinable())
+    {
+        m_Thread.join();
+    }
 }
 
 template<typename ReturnType, typename ...ArgumentTypes>

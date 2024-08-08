@@ -66,17 +66,25 @@ void WorkerThreadPool::DispatchTasks(WorkerThreadPool* pThreadPool, size_t heapB
 
 void WorkerThreadPool::OnDispatchTasks()
 {
+    std::unique_lock<std::mutex> lck(m_Mutex);
+
     while (m_isRunning)
     {
-        std::unique_lock<std::mutex> lck(m_Mutex);
-        while (m_TaskQueue.Size() > 0 && m_AvailableWorkers.Size() > 0)
+        if (m_TaskQueue.Size() > 0 && m_AvailableWorkers.Size() > 0)
         {
             WorkerTask* pTask = m_TaskQueue.PopBack();
             Worker* pWorker = m_AvailableWorkers.PopBack();
-            pWorker->m_pTask = pTask;
-            pWorker->m_WorkerThread.Run(WorkDone, pWorker);
-        }
 
-        m_CondValue.wait(lck);
+            lck.unlock();
+            {
+                pWorker->m_pTask = pTask;
+                pWorker->m_WorkerThread.Run(WorkDone, pWorker);
+            }
+            lck.lock();
+        }
+        else
+        {
+            m_CondValue.wait(lck);
+        }
     }
 }
