@@ -127,8 +127,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     BIOME_ASSERT(mesh.m_subMeshCount > 0);
 
     const SubMesh& subMesh = mesh.m_subMeshes[0];
-    const BufferView indexBuffer = subMesh.m_indexBuffer;
-    BIOME_ASSERT(subMesh.m_streamCount > 0);
+    const BufferView indexBuffer = subMesh.m_header.m_indexBuffer;
+    BIOME_ASSERT(subMesh.m_header.m_streamCount > 0);
     const VertexStream& vertexBufferPos = subMesh.m_streams[0];
     const VertexStream& vertexBufferNormal = subMesh.m_streams[1];
     const VertexStream& vertexBufferUv = subMesh.m_streams[3];

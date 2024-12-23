@@ -39,11 +39,16 @@ namespace biome
             VertexAttribute m_attribute {};
         };
 
+        struct SubMeshHeader
+        {
+            BufferView  m_indexBuffer {};
+            uint32_t    m_textureIndex { std::numeric_limits<uint32_t>::max() };
+            uint32_t    m_streamCount { 0 };
+        };
+
         struct SubMesh
         {
-            BufferView      m_indexBuffer {};
-            uint32_t        m_textureIndex { std::numeric_limits<uint32_t>::max() };
-            uint32_t        m_streamCount { 0 };
+            SubMeshHeader   m_header {};
             VertexStream    m_streams[1] {}; // Needs to be at the end to adapt to allocation size.
         };
 

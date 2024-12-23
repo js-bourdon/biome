@@ -262,8 +262,8 @@ bool AssetDatabaseBuilder::InsertMeshesMeta(const Document& json, FILE* pDBFile)
                 const Value& subMeshes = mesh[cpSubMeshesProperty];
                 const SizeType subMeshCount = subMeshes.Size();
 
-                Mesh meshData { subMeshCount };
-                if (!WriteData(meshData, pDBFile))
+                // Writing a Mesh in two steps, count then array of sub meshes.
+                if (!WriteData(static_cast<uint64_t>(subMeshCount), pDBFile))
                 {
                     return false;
                 }
@@ -278,17 +278,17 @@ bool AssetDatabaseBuilder::InsertMeshesMeta(const Document& json, FILE* pDBFile)
                         subMesh.HasMember(cpMaterialProperty) && subMesh[cpMaterialProperty].IsInt() &&
                         subMesh.HasMember(cpAttributesProperty) && subMesh[cpAttributesProperty].IsObject())
                     {
-                        SubMesh subMeshData {};
+                        SubMeshHeader subMeshHeader {};
 
                         const SizeType indexBufferIndex = subMesh[cpIndicesProperty].GetInt();
                         const SizeType materialIndex = subMesh[cpMaterialProperty].GetInt();
                         const Value& attributes = subMesh[cpAttributesProperty];
 
-                        subMeshData.m_textureIndex = GetTextureIndex(json, materialIndex);
-                        subMeshData.m_streamCount = GetSupportedAttributeCount(attributes);
-                        GetBufferView(json, indexBufferIndex, subMeshData.m_indexBuffer);
+                        subMeshHeader.m_textureIndex = GetTextureIndex(json, materialIndex);
+                        subMeshHeader.m_streamCount = GetSupportedAttributeCount(attributes);
+                        GetBufferView(json, indexBufferIndex, subMeshHeader.m_indexBuffer);
                         
-                        if (!WriteData(subMeshData, pDBFile))
+                        if (!WriteData(subMeshHeader, pDBFile))
                         {
                             return false;
                         }
