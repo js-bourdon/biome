@@ -30,6 +30,9 @@
     <Filter Include="Dependencies">
       <UniqueIdentifier>{dce0bc3a-ba97-469e-94bb-3bbd8512d053}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Utilities">
+      <UniqueIdentifier>{e105e3c3-64a5-4b2b-b08f-93679fd7a161}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -122,6 +125,9 @@
     <ClInclude Include="Descriptors\Raytracing.h">
       <Filter>src\Descriptors</Filter>
     </ClInclude>
+    <ClInclude Include="Utilities\Utilities.h">
+      <Filter>src\Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Events\MessagePump.cpp">
@@ -141,6 +147,9 @@
     </ClCompile>
     <ClCompile Include="Systems\SystemUtils.cpp">
       <Filter>src\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Utilities.cpp">
+      <Filter>src\Utilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

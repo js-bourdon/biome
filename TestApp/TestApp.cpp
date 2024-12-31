@@ -26,6 +26,7 @@
 #include "biome_rhi/Descriptors/Viewport.h"
 #include "biome_rhi/Descriptors/Rectangle.h"
 #include "biome_render/FirstPersonCamera.h"
+#include "biome_rhi/Utilities/Utilities.h"
 
 #ifdef _DEBUG
     #include <pix3.h>
@@ -94,7 +95,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     threadPool.QueueTask(&tasks[1]);
     threadPool.QueueTask(&tasks[2]);
 
-    //*
+    /*
     WorkerThread<decltype(WorkerFunction)> worker0(WorkerFunction, GiB(1), MiB(100));
     WorkerThread<decltype(WorkerFunction)> worker1(WorkerFunction, GiB(1), MiB(100));
     worker0.Init();
@@ -121,7 +122,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     
     // Assets loading
     AssetDatabase* pAssetDb = LoadDatabase("Media/builds/star_trek_danube_class/StartTrek.db");
-    const Texture* pTextures = GetTextures(pAssetDb);
+    const biome::asset::Texture* pTextures = GetTextures(pAssetDb);
     const Mesh* pMeshes = GetMeshes(pAssetDb);
     BIOME_ASSERT(pAssetDb->m_header.m_meshCount > 0);
     BIOME_ASSERT(pAssetDb->m_header.m_textureCount > 0);
@@ -136,7 +137,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     const VertexStream& vertexBufferNormal = subMesh.m_streams[1];
     const VertexStream& vertexBufferUv = subMesh.m_streams[3];
     BIOME_ASSERT(subMesh.m_header.m_textureIndex < pAssetDb->m_header.m_textureCount);
-    const Texture& texture = pTextures[subMesh.m_header.m_textureIndex];
+    const biome::asset::Texture& texture = pTextures[subMesh.m_header.m_textureIndex];
 
     const StaticArray<uint8_t> buffers = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Buffers.bin");
     const StaticArray<uint8_t> textures = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Textures.bin");
@@ -181,7 +182,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             0u, 
             Format::Unknown);
 
-    //const TextureHandle textureHdl = device::CreateTexture(deviceHdl, texture.)
+    const TextureHandle textureHdl = device::CreateTexture(
+        deviceHdl,
+        texture.m_pixelWidth,
+        texture.m_pixelHeight,
+        biome::rhi::utils::ConvertAssetTextureFormat(texture.m_format),
+        false, /*allowRtv*/
+        false, /*allowDsv*/
+        true,  /*allowSrv*/
+        false  /*allowUav*/);
+
+    void* const pTextureData = device::MapTexture(deviceHdl, textureHdl);
+    memcpy(pTextureData, textures.Data() + texture.m_byteOffset, texture.m_byteSize);
+    device::UnmapTexture(deviceHdl, textureHdl);
 
     constexpr bool allowRtv = false;
     constexpr bool allowDsv = true;

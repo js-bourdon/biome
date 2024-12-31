@@ -206,6 +206,7 @@
     <ClInclude Include="Systems\DeviceSystem.h" />
     <ClInclude Include="Systems\SystemEnums.h" />
     <ClInclude Include="Systems\SystemUtils.h" />
+    <ClInclude Include="Utilities\Utilities.h" />
     <ClInclude Include="WindowFactory\WindowFactory.h" />
   </ItemGroup>
   <ItemGroup>
@@ -219,6 +220,7 @@
     <ClCompile Include="Systems\CommandSystem.cpp" />
     <ClCompile Include="Systems\DeviceSystem.cpp" />
     <ClCompile Include="Systems\SystemUtils.cpp" />
+    <ClCompile Include="Utilities\Utilities.cpp" />
     <ClCompile Include="WindowFactory\WindowFactory.cpp" />
   </ItemGroup>
   <ItemGroup>

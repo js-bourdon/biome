@@ -23,6 +23,8 @@ namespace biome
         {
             uint64_t        m_byteSize;
             uint64_t        m_byteOffset;
+            uint32_t        m_pixelWidth;
+            uint32_t        m_pixelHeight;
             TextureFormat   m_format;
         };
     }

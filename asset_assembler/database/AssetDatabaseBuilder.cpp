@@ -144,14 +144,14 @@ bool AssetDatabaseBuilder::PackTextures(const Document &json, const char *pSrcRo
                     const char *pTextureUri = uri.GetString();
 
                     str_smart_ptr pSrcFilePath = biome::filesystem::AppendPaths(pSrcRootPath, pTextureUri);
-                    int64_t textureByteSize = CompressTexture(pSrcFilePath, pDestFile);
-                    if (textureByteSize <= 0)
+                    const TextureInfo textureInfo = CompressTexture(pSrcFilePath, pDestFile);
+                    if (textureInfo.m_byteSize == 0)
                     {
                         return false;
                     }
 
-                    m_texturesMeta.Emplace(currentByteOffset, textureByteSize);
-                    currentByteOffset += textureByteSize;
+                    m_texturesMeta.Emplace(currentByteOffset, textureInfo.m_byteSize, textureInfo.m_pixelWidth, textureInfo.m_pixelHeight);
+                    currentByteOffset += textureInfo.m_byteSize;
                 }
             }
         }
@@ -227,8 +227,8 @@ bool AssetDatabaseBuilder::InsertTexturesMeta(const Document& json, FILE* pDBFil
     uint32_t textureCount = m_texturesMeta.Size();
     for (uint32_t i = 0; i < textureCount; ++i)
     {
-        const PackedBufferMeta& meta = m_texturesMeta[i];
-        Texture texture { meta.m_byteSize, meta.m_byteOffset, TextureFormat::BC3 };
+        const PackedTextureMeta& meta = m_texturesMeta[i];
+        Texture texture { meta.m_byteSize, meta.m_byteOffset, meta.m_pixelWidth, meta.m_pixelHeight, TextureFormat::BC3 };
 
         if (!WriteData(texture, pDBFile))
         {
@@ -444,28 +444,31 @@ void AssetDatabaseBuilder::GetBufferView(const Document& json, SizeType accessor
     }
 }
 
-int64_t AssetDatabaseBuilder::CompressTexture(const char* pSrcFilePath, FILE* pDestFile)
+AssetDatabaseBuilder::TextureInfo AssetDatabaseBuilder::CompressTexture(const char* pSrcFilePath, FILE* pDestFile)
 {
     // TODO: Generate MIP chain if not already generated
 
     // Load images with stb_image
     // https://github.com/nothings/stb/blob/master/stb_image.h
 
-    int pixelWidth, pixelHeight, componentCount;
+    int width, height, componentCount;
     constexpr int mode = 0; // Normal mode
-    const unsigned char* fileContent = stbi_load(pSrcFilePath, &pixelWidth, &pixelHeight, &componentCount, mode);
+    const unsigned char* fileContent = stbi_load(pSrcFilePath, &width, &height, &componentCount, mode);
 
     BIOME_ASSERT(componentCount == 3 || componentCount == 4);
 
     // Block compress using stb_dxt
     // https://github.com/nothings/stb/blob/master/stb_dxt.h
 
-    BIOME_ASSERT(pixelWidth % 4 == 0);
-    BIOME_ASSERT(pixelHeight % 4 == 0);
+    BIOME_ASSERT(width % 4 == 0);
+    BIOME_ASSERT(height % 4 == 0);
+
+    const uint32_t pixelWidth = static_cast<uint32_t>(width);
+    const uint32_t pixelHeight = static_cast<uint32_t>(height);
 
     const uint32_t blockWidth = pixelWidth >> 2;
     const uint32_t blockHeight = pixelHeight >> 2;
-    const int64_t byteSize = blockWidth * blockHeight * 16;
+    const uint64_t byteSize = blockWidth * blockHeight * 16;
     const uint32_t rowStride = pixelWidth * componentCount;
 
     ThreadHeapSmartPointer<unsigned char> bcDest(ThreadHeapAllocator::Allocate(byteSize));
@@ -508,6 +511,6 @@ int64_t AssetDatabaseBuilder::CompressTexture(const char* pSrcFilePath, FILE* pD
             BIOME_ASSERT_ALWAYS_EXEC(fwrite(pBlockData, sizeof(uint8_t), sizeof(blockData), pDestFile) == sizeof(blockData));
         }
     }
-
-    return byteSize;
+    
+    return TextureInfo { byteSize, pixelWidth, pixelHeight };
 }

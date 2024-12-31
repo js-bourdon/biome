@@ -51,6 +51,22 @@ namespace asset_assembler
                 uint64_t m_byteSize;
             };
 
+            struct PackedTextureMeta : PackedBufferMeta
+            {
+                PackedTextureMeta(uint64_t byteOffset, uint64_t byteSize, uint32_t pixelWidth, uint32_t pixelHeight) 
+                    : PackedBufferMeta(byteOffset, byteSize), m_pixelWidth(pixelWidth), m_pixelHeight(pixelHeight) {}
+
+                uint32_t m_pixelWidth;
+                uint32_t m_pixelHeight;
+            };
+
+            struct TextureInfo
+            {
+                uint64_t m_byteSize;
+                uint32_t m_pixelWidth;
+                uint32_t m_pixelHeight;
+            };
+
             static constexpr uint32_t   cInvalidIndex = std::numeric_limits<uint32_t>::max();
             static constexpr const char cpBuffersBinFileName[] = "Buffers.bin";
             static constexpr const char cpTexturesBinFileName[] = "Textures.bin";
@@ -69,11 +85,11 @@ namespace asset_assembler
             uint32_t    GetTextureIndex(const Document& json, SizeType materialIndex);
             void        GetBufferView(const Document& json, SizeType accessorIndex, BufferView& oView);
             uint32_t    GetSupportedAttributeCount(const Value& attributes);
-            int64_t     CompressTexture(const char* pSrcFilePath, FILE* pDestFile);
+            TextureInfo CompressTexture(const char* pSrcFilePath, FILE* pDestFile);
 
         private:
 
-            Vector<PackedBufferMeta> m_texturesMeta { 100 };
+            Vector<PackedTextureMeta> m_texturesMeta { 100 };
             Vector<PackedBufferMeta> m_buffersMeta { 100 };
         };
     }
