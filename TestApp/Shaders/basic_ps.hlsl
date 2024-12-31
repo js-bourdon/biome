@@ -12,5 +12,6 @@ float4 main(VsOut vsOut) : SV_TARGET
 
     float3 surface_normal = normalize(vsOut.normal);
     float intensity = dot(sun_direction, surface_normal);
-    return float4(intensity, intensity, intensity, 1.0f);
+    float2 color = intensity * vsOut.uv;
+    return float4(color, intensity, 1.0f);
 }

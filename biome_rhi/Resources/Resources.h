@@ -21,6 +21,7 @@ namespace biome::rhi
         {
             D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle {};
             D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandle {};
+            uint32_t                    m_heapOffset {};
         };
 
         struct UploadHeap
@@ -45,27 +46,30 @@ namespace biome::rhi
 
             DescriptorHeap*                     m_pViewDescriptorHeap { nullptr };
             AllocatorArray                      m_cmdAllocators {};
-            ComPtr<ID3D12GraphicsCommandList>   m_pCmdList { nullptr };
+            ComPtr<ID3D12GraphicsCommandList7>  m_pCmdList { nullptr };
             CommandType                         m_type {};
         };
 
         struct Resource
         {
             ComPtr<ID3D12Resource>  m_pResource { nullptr };
-            uint32_t                m_srv { 0 };
-            uint32_t                m_uav { 0 };
+            ComPtr<ID3D12Resource>  m_currentUploadHeap {};
+            uint32_t                m_currentUploadHeapOffset { 0 };
+            uint32_t                m_byteSize { 0 };
+            uint32_t                m_srvHeapOffset { 0 };
+            uint32_t                m_uavHeapOffset { 0 };
         };
 
         struct Texture : public Resource
         {
             D3D12_CPU_DESCRIPTOR_HANDLE m_cbdbHandle {};
+            D3D12_BARRIER_ACCESS m_currentAccess { D3D12_BARRIER_ACCESS_COMMON };
+            D3D12_BARRIER_LAYOUT m_currentLayout { D3D12_BARRIER_LAYOUT_COMMON };
+            D3D12_SUBRESOURCE_FOOTPRINT m_footprint {};
         };
 
         struct Buffer : public Resource
         {
-            ComPtr<ID3D12Resource>          m_currentUploadHeap {};
-            uint32_t                        m_currentUploadHeapOffset { 0 };
-            uint32_t                        m_byteSize { 0 };
             uint32_t                        m_stride { 0 };
             biome::rhi::descriptors::Format m_format { biome::rhi::descriptors::Format::Unknown };
         };
@@ -79,7 +83,7 @@ namespace biome::rhi
         {
             static constexpr uint32_t                       UploadHeapByteSize = MiB(128);
 
-            ComPtr<ID3D12Device>                            m_pDevice { nullptr };
+            ComPtr<ID3D12Device10>                          m_pDevice { nullptr };
             DescriptorHeap                                  m_RtvDescriptorHeap {};
             DescriptorHeap                                  m_DsvDescriptorHeap {};
             DescriptorHeap                                  m_ResourceViewHeap {};
@@ -168,6 +172,20 @@ namespace biome::rhi
     {
         BufferHandle hdl;
         AsHandle(pBuffer, hdl);
+        return hdl;
+    }
+
+    inline Texture* ToType(TextureHandle hdl)
+    {
+        Texture* pTexture;
+        AsType(pTexture, hdl);
+        return pTexture;
+    }
+
+    inline TextureHandle ToHandle(Texture* pTexture)
+    {
+        TextureHandle hdl;
+        AsHandle(pTexture, hdl);
         return hdl;
     }
 

@@ -1,5 +1,8 @@
 // LWGL_TestApp.cpp : Defines the entry point for the application.
 //
+
+#define _HAS_EXCEPTIONS 0
+
 #include "framework.h"
 #include "TestApp.h"
 #include <cstdint>
@@ -132,6 +135,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     const VertexStream& vertexBufferPos = subMesh.m_streams[0];
     const VertexStream& vertexBufferNormal = subMesh.m_streams[1];
     const VertexStream& vertexBufferUv = subMesh.m_streams[3];
+    BIOME_ASSERT(subMesh.m_header.m_textureIndex < pAssetDb->m_header.m_textureCount);
+    const Texture& texture = pTextures[subMesh.m_header.m_textureIndex];
 
     const StaticArray<uint8_t> buffers = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Buffers.bin");
     const StaticArray<uint8_t> textures = biome::filesystem::ReadFileContent("Media/builds/star_trek_danube_class/Textures.bin");
@@ -176,12 +181,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             0u, 
             Format::Unknown);
 
+    //const TextureHandle textureHdl = device::CreateTexture(deviceHdl, texture.)
+
     constexpr bool allowRtv = false;
     constexpr bool allowDsv = true;
+    constexpr bool allowSrv = false;
     constexpr bool allowUav = false;
     constexpr Format dsvFormat = Format::D24_UNORM_S8_UINT;
 
-    const TextureHandle depthBufferHdl = device::CreateTexture(deviceHdl, windowWidth, windowHeight, dsvFormat, allowRtv, allowDsv, allowUav);
+    const TextureHandle depthBufferHdl = device::CreateTexture(deviceHdl, windowWidth, windowHeight, dsvFormat, allowRtv, allowDsv, allowSrv, allowUav);
 
     void* const pIndexBufferData = device::MapBuffer(deviceHdl, indexBufferHdl);
     void* const pVertexBufferPosData = device::MapBuffer(deviceHdl, vertexBufferPosHdl);
@@ -326,7 +334,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         const BufferHandle vertexStreams[] = { vertexBufferPosHdl, vertexBufferNormalHdl, vertexBufferUvHdl };
         commands::SetVertexBuffers(cmdBufferHdl, 0, std::extent<decltype(vertexStreams)>::value, vertexStreams);
 
-        commands::ClearRenderTarget(cmdBufferHdl, backBufferHdl, { 0.f, 0.5f, 0.f ,0.f });
+        commands::ClearRenderTarget(cmdBufferHdl, backBufferHdl, { 0.15f, 0.15f, 0.15f ,0.f });
         commands::ClearDepthStencil(cmdBufferHdl, depthBufferHdl);
         commands::OMSetRenderTargets(cmdBufferHdl, 1, &backBufferHdl, &depthBufferHdl);
         commands::DrawIndexedInstanced(cmdBufferHdl, static_cast<uint32_t>(indexBuffer.m_byteSize >> 2u), 1u, 0u, 0u, 0u);

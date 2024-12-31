@@ -22,6 +22,7 @@
 #include "Handle/Handle.h"
 #include "Core/Defines.h"
 #include "Core/Globals.h"
+#include "Core/Utilities.h"
 #include "Math/Math.h"
 #include "Memory/Memory.h"
 

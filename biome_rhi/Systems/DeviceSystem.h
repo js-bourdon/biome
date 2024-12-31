@@ -61,6 +61,7 @@ namespace biome::rhi
                                         const descriptors::Format format,
                                         const bool allowRtv,
                                         const bool allowDsv,
+                                        const bool allowSrv,
                                         const bool allowUav);
 
         AccelerationStructureHandle CreateRtAccelerationStructure(
@@ -69,6 +70,8 @@ namespace biome::rhi
 
         void*                       MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
         void                        UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
+        void*                       MapTexture(GpuDeviceHandle deviceHdl, TextureHandle hdl);
+        void                        UnmapTexture(GpuDeviceHandle deviceHdl, TextureHandle hdl);
 
         void                        DestroyDevice(GpuDeviceHandle hdl);
         void                        DestroyCommandQueue(CommandQueueHandle hdl);

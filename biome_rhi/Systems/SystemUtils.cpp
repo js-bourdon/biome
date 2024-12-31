@@ -9,6 +9,7 @@ DescriptorHandle util::GetDescriptorHandle(DescriptorHeap& heap)
 	const INT heapOffset = static_cast<INT>(heap.m_OffsetAllocator.AllocatePages(1));
 
 	DescriptorHandle descriptorHdl = {};
+	descriptorHdl.m_heapOffset = static_cast<uint32_t>(heapOffset);
 	descriptorHdl.m_cpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(heap.m_pDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), heapOffset);
 
 	const D3D12_DESCRIPTOR_HEAP_DESC heapDesc = heap.m_pDescriptorHeap->GetDesc();
@@ -27,5 +28,6 @@ void util::ReleaseDescriptorHandle(DescriptorHeap& heap, DescriptorHandle& handl
 	const uint64_t handleOffset = handle.m_cpuHandle.ptr;
 	const uint64_t startHandleOffset = heap.m_pDescriptorHeap->GetCPUDescriptorHandleForHeapStart().ptr;
 	const uint64_t offset = handleOffset - startHandleOffset;
+	BIOME_ASSERT(offset == handle.m_heapOffset);
 	heap.m_OffsetAllocator.Release(offset);
 }

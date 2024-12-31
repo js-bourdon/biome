@@ -2,6 +2,7 @@
 
 #include <malloc.h>
 #include <new>
+#include "biome_core/Core/Utilities.h"
 
 // Global allocation operator overrides
 void* operator new(std::size_t count);
@@ -30,10 +31,12 @@ namespace biome
             return _malloca(size);
         }
 
-        inline size_t Align(size_t size, size_t alignment)
+        template<typename T> concept UnsignedType = std::is_unsigned_v<T>;
+        template<UnsignedType T0, UnsignedType T1>
+        inline constexpr utils::LargestType<T0, T1> Align(T0 size, T1 alignment)
         {
-            size_t factor = alignment - 1;
-            return (size + factor) & ~factor;
+            const utils::LargestType<T0, T1> mask = alignment - 1;
+            return (size + mask) & ~mask;
         }
     }
 }

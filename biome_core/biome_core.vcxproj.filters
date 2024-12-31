@@ -140,6 +140,9 @@
     <ClInclude Include="Threading\WorkerThreadPool.h">
       <Filter>src\Threading</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Utilities.h">
+      <Filter>src\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructures\IndexFreeList.cpp">

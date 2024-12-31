@@ -2,6 +2,7 @@
 
 #include <wrl/client.h>
 #include <d3d12.h>
+#include <d3dx12.h>
 #include <dxgi1_6.h>
 
 #ifdef _DEBUG
@@ -18,4 +19,4 @@ using namespace Microsoft::WRL;
 #endif
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
-extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
+extern "C" { __declspec(dllexport) extern const char8_t* D3D12SDKPath = u8".\\D3D12\\"; }

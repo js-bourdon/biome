@@ -115,9 +115,9 @@ namespace
         return pCmdAlloc;
     }
 
-    static ID3D12GraphicsCommandList* CreateCommandList(ID3D12Device* pDevice, ID3D12CommandAllocator* pCmdAllocator, D3D12_COMMAND_LIST_TYPE cmdType)
+    static ID3D12GraphicsCommandList7* CreateCommandList(ID3D12Device* pDevice, ID3D12CommandAllocator* pCmdAllocator, D3D12_COMMAND_LIST_TYPE cmdType)
     {
-        ID3D12GraphicsCommandList* pCmdList = nullptr;
+        ID3D12GraphicsCommandList7* pCmdList = nullptr;
         BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pDevice->CreateCommandList(0, cmdType, pCmdAllocator, nullptr, IID_PPV_ARGS(&pCmdList))));
         return pCmdList;
     }
@@ -710,7 +710,7 @@ GpuDeviceHandle device::CreateDevice(const uint32_t framesOfLatency, const bool 
 		}
     }
 
-    ComPtr<ID3D12Device> pDevice {};
+    ComPtr<ID3D12Device10> pDevice {};
     ComPtr<ID3D12DescriptorHeap> pRtvDescriptorHeap {};
     ComPtr<ID3D12DescriptorHeap> pDsvDescriptorHeap {};
     ComPtr<ID3D12DescriptorHeap> pViewDescriptorHeap {};
@@ -1258,9 +1258,11 @@ TextureHandle device::CreateTexture(
     const descriptors::Format format, 
     const bool allowRtv, 
     const bool allowDsv, 
+    const bool allowSrv,
     const bool allowUav)
 {
     GpuDevice* pDevice = ToType(deviceHdl);
+    const DXGI_FORMAT nativeFormat = ToNativeFormat(format);
 
     // TODO: Use placed resources
 
@@ -1276,7 +1278,7 @@ TextureHandle device::CreateTexture(
     rscDesc.Height = pixelHeight;
     rscDesc.DepthOrArraySize = 1;
     rscDesc.MipLevels = 1;
-    rscDesc.Format = ToNativeFormat(format);
+    rscDesc.Format = nativeFormat;
     rscDesc.SampleDesc.Count = 1;
     rscDesc.SampleDesc.Quality = 0;
     rscDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -1314,6 +1316,13 @@ TextureHandle device::CreateTexture(
         pClearValue = &clearValue;
     }
 
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint {};
+    pDevice->m_pDevice->GetCopyableFootprints(&rscDesc, 0, 1, 0, &footprint, nullptr, nullptr, nullptr);
+    spTexture->m_footprint = footprint.Footprint;
+
+    const D3D12_RESOURCE_ALLOCATION_INFO allocInfo = pDevice->m_pDevice->GetResourceAllocationInfo(0, 1, &rscDesc);
+    spTexture->m_byteSize = static_cast<uint32_t>(allocInfo.SizeInBytes);
+
     const HRESULT hr = pDevice->m_pDevice->CreateCommittedResource(
         &heapProps,
         D3D12_HEAP_FLAG_NONE,
@@ -1327,7 +1336,34 @@ TextureHandle device::CreateTexture(
         return Handle_NULL;
     }
 
-    // TODO: Add SRV & UAV
+    if (allowSrv)
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc {};
+        srvDesc.Format = nativeFormat;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MipLevels = 1;
+        srvDesc.Texture2D.MostDetailedMip = 0;
+        srvDesc.Texture2D.PlaneSlice = 0;
+        srvDesc.Texture2D.ResourceMinLODClamp = 0.f;
+
+        const DescriptorHandle srvHandle = util::GetDescriptorHandle(pDevice->m_ResourceViewHeap);
+        pDevice->m_pDevice->CreateShaderResourceView(spTexture->m_pResource.Get(), &srvDesc, srvHandle.m_cpuHandle);
+        spTexture->m_srvHeapOffset = srvHandle.m_heapOffset;
+    }
+
+    if (allowUav)
+    {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc {};
+        uavDesc.Format = nativeFormat;
+        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+        uavDesc.Texture2D.MipSlice = 0;
+        uavDesc.Texture2D.PlaneSlice = 0;
+
+        const DescriptorHandle uavHandle = util::GetDescriptorHandle(pDevice->m_ResourceViewHeap);
+        pDevice->m_pDevice->CreateUnorderedAccessView(spTexture->m_pResource.Get(), nullptr, &uavDesc, uavHandle.m_cpuHandle);
+        spTexture->m_uavHeapOffset = uavHandle.m_heapOffset;
+    }
 
     if (allowDsv)
     {
@@ -1433,6 +1469,85 @@ void device::UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
 
     pBuffer->m_currentUploadHeap.Reset();
     pBuffer->m_currentUploadHeapOffset = 0;
+}
+
+void* device::MapTexture(GpuDeviceHandle deviceHdl, TextureHandle hdl)
+{
+    GpuDevice* pGpuDevice = ToType(deviceHdl);
+    Texture* pTexture = ToType(hdl);
+
+    const uint64_t currentFrame = pGpuDevice->m_currentFrame;
+    const uint64_t currentUploadHeapIndex = currentFrame % (pGpuDevice->m_framesOfLatency + 1);
+    const uint32_t textureByteSize = memory::Align(pTexture->m_byteSize, static_cast<uint32_t>(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT));
+
+    UploadHeap& uploadHeap = pGpuDevice->m_UploadHeaps[currentUploadHeapIndex];
+    EnsureUploadSpace(pGpuDevice, uploadHeap, textureByteSize);
+    ID3D12Resource* pUploadBuffer = uploadHeap.m_spUploadBuffers[uploadHeap.m_currentUploadHeapIndex].Get();
+
+    pTexture->m_currentUploadHeap = pUploadBuffer;
+    pTexture->m_currentUploadHeapOffset = uploadHeap.m_currentUploadHeapOffset;
+
+    void* pMappedData = nullptr;
+    BIOME_ASSERT_ALWAYS_EXEC(SUCCEEDED(pUploadBuffer->Map(0, nullptr, &pMappedData)));
+
+    uint8_t* pReturnedAddr = static_cast<uint8_t*>(pMappedData) + uploadHeap.m_currentUploadHeapOffset;
+    uploadHeap.m_currentUploadHeapOffset += textureByteSize;
+
+    return pReturnedAddr;
+}
+
+void device::UnmapTexture(GpuDeviceHandle deviceHdl, TextureHandle hdl)
+{
+    GpuDevice* pGpuDevice = ToType(deviceHdl);
+    Texture* pTexture = ToType(hdl);
+
+    pTexture->m_currentUploadHeap->Unmap(0, nullptr);
+
+    constexpr uint32_t dstOffset = 0;
+
+    /*
+    D3D12_TEXTURE_COPY_LOCATION src {};
+    src.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    src.SubresourceIndex = 0;
+    src.pResource = pTexture->m_pResource.Get();
+
+    D3D12_TEXTURE_COPY_LOCATION dst {};
+
+    D3D12_BARRIER_GROUP barrierGroup {};
+    D3D12_TEXTURE_BARRIER barrier {};
+    barrier.pResource = pTexture->m_pResource.Get();
+    barrier.AccessBefore = pTexture->m_currentAccess;
+    barrier.AccessAfter = D3D12_BARRIER_ACCESS_COPY_DEST;
+    barrier.LayoutBefore = pTexture->m_currentLayout;
+    barrier.LayoutAfter = D3D12_BARRIER_LAYOUT_COPY_DEST;
+    barrier.SyncBefore = D3D12_BARRIER_SYNC_DRAW;
+    barrier.SyncAfter = D3D12_BARRIER_SYNC_COPY;
+    barrier.Subresources.FirstArraySlice = 0;
+    barrier.Subresources.FirstPlane = 0;
+    barrier.Subresources.IndexOrFirstMipLevel = 0;
+    barrier.Subresources.NumArraySlices = 1;
+    barrier.Subresources.NumMipLevels = 1;
+    barrier.Subresources.NumPlanes = 1;
+    barrier.Flags = D3D12_TEXTURE_BARRIER_FLAG_NONE;
+    barrierGroup.NumBarriers = 1;
+    barrierGroup.pTextureBarriers = &barrier;
+    pGpuDevice->m_DmaCommandBuffer.m_pCmdList->Barrier(1, &barrierGroup);
+    
+    pGpuDevice->m_DmaCommandBuffer.m_pCmdList->CopyTextureRegion()
+    */
+    
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT uploadFootprint;
+    uploadFootprint.Footprint = pTexture->m_footprint;
+    uploadFootprint.Offset = pTexture->m_currentUploadHeapOffset;
+
+    CD3DX12_TEXTURE_COPY_LOCATION dst(pTexture->m_pResource.Get());
+    CD3DX12_TEXTURE_COPY_LOCATION src(pTexture->m_currentUploadHeap.Get(), uploadFootprint);
+
+    constexpr UINT dstX = 0; constexpr UINT dstY = 0; constexpr UINT dstZ = 0;
+    pGpuDevice->m_DmaCommandBuffer.m_pCmdList->CopyTextureRegion(&dst, dstX, dstY, dstZ, &src, nullptr);
+
+    pTexture->m_currentUploadHeap.Reset();
+    pTexture->m_currentUploadHeapOffset = 0;
 }
 
 void device::DestroyDevice(GpuDeviceHandle hdl)
