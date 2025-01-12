@@ -78,9 +78,16 @@ void commands::SetGraphicsShaderResourceLayout(CommandBufferHandle cmdBufferHdl,
     pCmdBuffer->m_pCmdList->SetGraphicsRootSignature(pRootSig);
 }
 
-void commands::SetComputeConstant(CommandBufferHandle cmdBufferHdl, uint32_t index, uint32_t value, uint32_t destOffsetInValues)
+void commands::SetComputeConstants(CommandBufferHandle cmdBufferHdl, uint32_t index, uint32_t valueCount, const uint32_t* values)
 {
+    CommandBuffer* pCmdBuffer = ToType(cmdBufferHdl);
+    pCmdBuffer->m_pCmdList->SetComputeRoot32BitConstants(index, valueCount, values, 0);
+}
 
+void commands::SetGraphicsConstants(CommandBufferHandle cmdBufferHdl, uint32_t index, uint32_t valueCount, const uint32_t* values)
+{
+    CommandBuffer* pCmdBuffer = ToType(cmdBufferHdl);
+    pCmdBuffer->m_pCmdList->SetGraphicsRoot32BitConstants(index, valueCount, values, 0);
 }
 
 void commands::SetDescriptorHeaps(CommandBufferHandle cmdBufferHdl)

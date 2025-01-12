@@ -1383,6 +1383,7 @@ TextureHandle device::CreateTexture(
 }
 
 AccelerationStructureHandle device::CreateRtAccelerationStructure(
+    const GpuDeviceHandle deviceHdl,
     const RayTracingInstanceDesc* const pRtInstances,
     const uint32_t instanceCount)
 {
@@ -1425,6 +1426,18 @@ AccelerationStructureHandle device::CreateRtAccelerationStructure(
 
     RtAccelerationStructure* pAs = spAs.release();
     return AsHandle<AccelerationStructureHandle>(pAs);
+}
+
+ShaderResourceViewHandle device::GetTextureSrv(const GpuDeviceHandle deviceHdl, const TextureHandle hdl)
+{
+    Texture* pTexture = ToType(hdl);
+    return pTexture->m_srvHeapOffset;
+}
+
+UnorderedAccessViewHandle device::GetTextureUav(const GpuDeviceHandle deviceHdl, const TextureHandle hdl)
+{
+    Texture* pTexture = ToType(hdl);
+    return pTexture->m_uavHeapOffset;
 }
 
 void* device::MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl)
@@ -1535,7 +1548,17 @@ void device::UnmapTexture(GpuDeviceHandle deviceHdl, TextureHandle hdl)
     
     pGpuDevice->m_DmaCommandBuffer.m_pCmdList->CopyTextureRegion()
     */
-    
+
+    /*
+    pGpuDevice->m_DmaCommandBuffer.m_pCmdList->CopyBufferRegion(
+        pTexture->m_pResource.Get(),
+        dstOffset,
+        pTexture->m_currentUploadHeap.Get(),
+        pTexture->m_currentUploadHeapOffset,
+        pTexture->m_byteSize);
+    //*/
+
+    //*
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT uploadFootprint;
     uploadFootprint.Footprint = pTexture->m_footprint;
     uploadFootprint.Offset = pTexture->m_currentUploadHeapOffset;
@@ -1545,6 +1568,7 @@ void device::UnmapTexture(GpuDeviceHandle deviceHdl, TextureHandle hdl)
 
     constexpr UINT dstX = 0; constexpr UINT dstY = 0; constexpr UINT dstZ = 0;
     pGpuDevice->m_DmaCommandBuffer.m_pCmdList->CopyTextureRegion(&dst, dstX, dstY, dstZ, &src, nullptr);
+    //*/
 
     pTexture->m_currentUploadHeap.Reset();
     pTexture->m_currentUploadHeapOffset = 0;

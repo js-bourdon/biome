@@ -62,6 +62,9 @@ namespace biome
         typedef uintptr_t AppHandle;
         typedef uintptr_t LibraryHandle;
 
+        typedef uint32_t ShaderResourceViewHandle;
+        typedef uint32_t UnorderedAccessViewHandle;
+
         typedef biome::data::StaticArray<uint8_t> ShaderHandle;
     }
 }

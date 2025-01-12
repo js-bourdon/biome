@@ -65,8 +65,12 @@ namespace biome::rhi
                                         const bool allowUav);
 
         AccelerationStructureHandle CreateRtAccelerationStructure(
+                                        const GpuDeviceHandle deviceHdl,
                                         const RayTracingInstanceDesc* const pRtInstances, 
                                         const uint32_t instanceCount);
+
+        ShaderResourceViewHandle    GetTextureSrv(const GpuDeviceHandle deviceHdl, const TextureHandle hdl);
+        UnorderedAccessViewHandle   GetTextureUav(const GpuDeviceHandle deviceHdl, const TextureHandle hdl);
 
         void*                       MapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);
         void                        UnmapBuffer(GpuDeviceHandle deviceHdl, BufferHandle hdl);

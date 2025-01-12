@@ -196,6 +196,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     memcpy(pTextureData, textures.Data() + texture.m_byteOffset, texture.m_byteSize);
     device::UnmapTexture(deviceHdl, textureHdl);
 
+    const uint32_t textureOffsets[] = { device::GetTextureSrv(deviceHdl, textureHdl), 0u };
+
     constexpr bool allowRtv = false;
     constexpr bool allowDsv = true;
     constexpr bool allowSrv = false;
@@ -335,6 +337,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         commands::RSSetScissorRects(cmdBufferHdl, 1, &scissorRect);
         commands::RSSetViewports(cmdBufferHdl, 1, &viewport);
         commands::SetGraphicsConstantBuffer(cmdBufferHdl, constantBufferHdl, 1);
+        commands::SetGraphicsConstants(cmdBufferHdl, 0, std::extent_v<decltype(textureOffsets)>, textureOffsets);
 
         commands::TextureStateTransition transition;
         transition.m_textureHdl = backBufferHdl;

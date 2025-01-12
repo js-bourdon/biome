@@ -4,6 +4,12 @@ struct Constants
     float4x4 projection;
 };
 
+struct TextureOffsets
+{
+    uint albedo;
+    uint roughness;
+};
+
 struct VsIn
 {
     float4 pos : POSITION;
@@ -19,4 +25,7 @@ struct VsOut
     float2 uv : TEXCOORD1;
 };
 
-ConstantBuffer<Constants> cb;
+ConstantBuffer<Constants> cb : register(b0);
+ConstantBuffer<TextureOffsets> textureOffsets : register(b1);
+
+SamplerState smplr : register(s0);

@@ -113,6 +113,7 @@ bool AssetDatabaseBuilder::PackData(
 bool AssetDatabaseBuilder::PackTextures(const Document &json, const char *pSrcRootPath, const char *pDestRootPath)
 {
     static constexpr const char s_pTexturesBinFileName[] = "Textures.bin";
+    //static constexpr const char s_pTexturesBinFileName[] = "Textures.dds";
     static constexpr const char s_pImgProperty[] = "images";
     static constexpr const char s_pUriProperty[] = "uri";
 
@@ -460,18 +461,84 @@ AssetDatabaseBuilder::TextureInfo AssetDatabaseBuilder::CompressTexture(const ch
     // Block compress using stb_dxt
     // https://github.com/nothings/stb/blob/master/stb_dxt.h
 
-    BIOME_ASSERT(width % 4 == 0);
-    BIOME_ASSERT(height % 4 == 0);
+    constexpr uint32_t blockPixelSize = 4; // 4x4 pixel blocks
+    BIOME_ASSERT(width % blockPixelSize == 0);
+    BIOME_ASSERT(height % blockPixelSize == 0);
 
     const uint32_t pixelWidth = static_cast<uint32_t>(width);
     const uint32_t pixelHeight = static_cast<uint32_t>(height);
 
-    const uint32_t blockWidth = pixelWidth >> 2;
-    const uint32_t blockHeight = pixelHeight >> 2;
-    const uint64_t byteSize = blockWidth * blockHeight * 16;
+    constexpr uint32_t blockByteSize = 16;
+    const uint32_t blockWidth = pixelWidth / blockPixelSize;
+    const uint32_t blockHeight = pixelHeight / blockPixelSize;
+    const uint64_t byteSize = blockWidth * blockHeight * blockByteSize;
     const uint32_t rowStride = pixelWidth * componentCount;
 
-    ThreadHeapSmartPointer<unsigned char> bcDest(ThreadHeapAllocator::Allocate(byteSize));
+    /* https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dds-header
+    {
+        // Write DDS header
+        constexpr uint32_t ddsMagic = 0x20534444;
+
+        struct DDS_PIXELFORMAT
+        {
+            DWORD dwSize;
+            DWORD dwFlags;
+            DWORD dwFourCC;
+            DWORD dwRGBBitCount;
+            DWORD dwRBitMask;
+            DWORD dwGBitMask;
+            DWORD dwBBitMask;
+            DWORD dwABitMask;
+        };
+
+        union FourCC
+        {
+            DWORD dword;
+            char cstr[4];
+        };
+
+        struct DDS_HEADER
+        {
+            DWORD           dwMagic;
+            DWORD           dwSize;
+            DWORD           dwFlags;
+            DWORD           dwHeight;
+            DWORD           dwWidth;
+            DWORD           dwPitchOrLinearSize;
+            DWORD           dwDepth;
+            DWORD           dwMipMapCount;
+            DWORD           dwReserved1[11];
+            DDS_PIXELFORMAT ddspf;
+            DWORD           dwCaps;
+            DWORD           dwCaps2;
+            DWORD           dwCaps3;
+            DWORD           dwCaps4;
+            DWORD           dwReserved2;
+        } ddsHeader = { 0 };
+
+        FourCC fourCC;
+        fourCC.cstr[0] = 'D';
+        fourCC.cstr[1] = 'X';
+        fourCC.cstr[2] = 'T';
+        fourCC.cstr[3] = '5';
+
+        ddsHeader.dwMagic = 0x20534444;
+        ddsHeader.dwSize = sizeof(DDS_HEADER);
+        ddsHeader.dwFlags = 0x81007;
+        ddsHeader.dwHeight = pixelHeight;
+        ddsHeader.dwWidth = pixelWidth;
+        ddsHeader.dwPitchOrLinearSize = static_cast<DWORD>(byteSize);
+        ddsHeader.ddspf.dwSize = sizeof(DDS_PIXELFORMAT);
+        ddsHeader.ddspf.dwFlags = 0x04;
+        ddsHeader.ddspf.dwFourCC = fourCC.dword;
+        ddsHeader.dwCaps = 0x1000;
+
+        BIOME_ASSERT_ALWAYS_EXEC(fwrite(&ddsHeader, sizeof(uint8_t), sizeof(DDS_HEADER), pDestFile) == sizeof(DDS_HEADER));
+    }
+    //*/
+
+    //ThreadHeapSmartPointer<unsigned char> bcDest(ThreadHeapAllocator::Allocate(byteSize));
+    unsigned char bcDest[blockByteSize];
 
     unsigned char blockData[16][4];
     const unsigned char* pBlockData = &blockData[0][0];
@@ -479,16 +546,16 @@ AssetDatabaseBuilder::TextureInfo AssetDatabaseBuilder::CompressTexture(const ch
     {
         for (uint32_t blockX = 0; blockX < blockWidth; ++blockX)
         {
-            const uint32_t pixelBlockStartOffset = blockY * 4 * rowStride + blockX * 4;
+            const uint32_t pixelBlockStartOffset = (blockY * rowStride + blockX * componentCount) * 4;
             const uint32_t destBlockOffset = blockY * blockWidth + blockX;
-            unsigned char* pDest = bcDest + destBlockOffset;
+            unsigned char* pDest = bcDest;
 
-            for (uint32_t y = 0; y < 4; ++y)
+            for (uint32_t y = 0; y < blockPixelSize; ++y)
             {
-                for (uint32_t x = 0; x < 4; ++x)
+                for (uint32_t x = 0; x < blockPixelSize; ++x)
                 {
                     const uint32_t srcPixelOffset = pixelBlockStartOffset + y * rowStride + x;
-                    const uint32_t blockDataDstOffset = y * 4 + x;
+                    const uint32_t blockDataDstOffset = y * blockPixelSize + x;
                     
                     blockData[blockDataDstOffset][0] = fileContent[srcPixelOffset];
                     blockData[blockDataDstOffset][1] = fileContent[srcPixelOffset + 1];
@@ -508,9 +575,11 @@ AssetDatabaseBuilder::TextureInfo AssetDatabaseBuilder::CompressTexture(const ch
             constexpr int alpha = 1;
             stb_compress_dxt_block(pDest, pBlockData, alpha, STB_DXT_NORMAL);
 
-            BIOME_ASSERT_ALWAYS_EXEC(fwrite(pBlockData, sizeof(uint8_t), sizeof(blockData), pDestFile) == sizeof(blockData));
+            BIOME_ASSERT_ALWAYS_EXEC(fwrite(pDest, sizeof(uint8_t), blockByteSize, pDestFile) == blockByteSize);
         }
     }
+
+    //BIOME_ASSERT_ALWAYS_EXEC(fwrite(bcDest, sizeof(uint8_t), byteSize, pDestFile) == byteSize);
     
     return TextureInfo { byteSize, pixelWidth, pixelHeight };
 }
